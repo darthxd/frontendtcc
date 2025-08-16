@@ -155,12 +155,15 @@ const Classes = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Série/Ano
                 </label>
-                <input
-                  type="text"
+                <select
                   {...register('grade')}
-                  className="input"
-                  placeholder="Ex: 1º Ano, 2º Ano"
-                />
+                  className="input bg-white"
+                >
+                  <option value="">Selecione a série/ano</option>
+                  <option value="FIRST_YEAR">Primeiro ano</option>
+                  <option value="SECOND_YEAR">Segundo ano</option>
+                  <option value="THIRD_YEAR">Terceiro ano</option>
+                </select>
               </div>
 
               <div>
@@ -169,7 +172,7 @@ const Classes = () => {
                 </label>
                 <select
                   {...register('shift')}
-                  className="input"
+                  className="input bg-white"
                 >
                   <option value="">Selecione o turno</option>
                   <option value="MORNING">Manhã</option>
@@ -180,15 +183,25 @@ const Classes = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Capacidade Máxima
+                  Curso
                 </label>
-                <input
-                  type="number"
-                  {...register('maxCapacity')}
-                  className="input"
-                  placeholder="Ex: 30"
-                  min="1"
-                />
+                <select
+                  {...register('course')}
+                  className="input bg-white"
+                >
+                  <option value="">Selecione o curso</option>
+                  <option value="ADM">ADM - Administração</option>
+                  <option value="BIO">BIO - Biologia</option>
+                  <option value="CV">CV - Comunicação Visual</option>
+                  <option value="DG">DG - Design Gráfico</option>
+                  <option value="DDI">DDI - Design de Interiores</option>
+                  <option value="DS">DS - Desenvolvimento de Sistemas</option>
+                  <option value="EDF">EDF - Edificações</option>
+                  <option value="LOG">LOG - Logística</option>
+                  <option value="MAT">MAT - Matemática</option>
+                  <option value="MEC">MEC - Mecânica</option>
+                  <option value="MED">MED - Ensino Médio padrão</option>
+                </select>
               </div>
             </div>
 
@@ -227,7 +240,7 @@ const Classes = () => {
                   Turno
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Capacidade
+                  Curso
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
@@ -241,7 +254,9 @@ const Classes = () => {
                     {cls.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cls.grade || '-'}
+                    {cls.grade === 'FIRST_YEAR' ? 'Primeiro ano' : 
+                     cls.grade === 'SECOND_YEAR' ? 'Segundo ano' : 
+                     cls.grade === 'THIRD_YEAR' ? 'Terceiro ano' : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {cls.shift === 'MORNING' ? 'Manhã' : 
@@ -249,7 +264,7 @@ const Classes = () => {
                      cls.shift === 'NIGHT' ? 'Noite' : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cls.maxCapacity || '-'}
+                    {cls.course || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">

@@ -81,7 +81,15 @@ const Teachers = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingTeacher(null);
-    reset();
+    reset({
+      username: '',
+      password: '',
+      name: '',
+      cpf: '',
+      email: '',
+      phone: '',
+      birthdate: ''
+    });
   };
 
   if (loading) {
@@ -104,7 +112,7 @@ const Teachers = () => {
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Novo Professor
+          Cadastrar Professor
         </button>
       </div>
 
@@ -125,7 +133,7 @@ const Teachers = () => {
         <div className="card">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              {editingTeacher ? 'Editar Professor' : 'Novo Professor'}
+              {editingTeacher ? 'Editar Professor' : 'Cadastrar Professor'}
             </h3>
             <button
               onClick={handleCancel}
@@ -137,6 +145,41 @@ const Teachers = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Usuário
+                </label>
+                <input
+                  type="text"
+                  {...register('username', { required: 'O usuário é obrigatório' })}
+                  className="input"
+                  placeholder="Usuário que será usado para entrar na conta"
+                />
+                {errors.username && (
+                  <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+                )}
+              </div>
+
+                {
+                  !editingTeacher ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Senha
+                      </label>
+                      <input
+                        type="text"
+                        {...register('password', { required: 'A senha é obrigatória' })}
+                        className="input"
+                        placeholder="Senha que será usada para entrar na conta"
+                      />
+                      {errors.password && (
+                        <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                      )}
+                    </div>
+                  ) : null
+                }
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome
@@ -175,13 +218,14 @@ const Teachers = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Especialização
+                  CPF
                 </label>
                 <input
                   type="text"
-                  {...register('specialization')}
+                  {...register('cpf', {required: "O CPF é obrigatório."})}
                   className="input"
-                  placeholder="Matemática, História, etc."
+                  placeholder="111.222.333-44"
+                  maxLength={11}
                 />
               </div>
 
@@ -194,6 +238,7 @@ const Teachers = () => {
                   {...register('phone')}
                   className="input"
                   placeholder="(11) 99999-9999"
+                  maxLength={11}
                 />
               </div>
             </div>
@@ -224,13 +269,16 @@ const Teachers = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Código
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
+                  CPF
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Especialização
+                  Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Telefone
@@ -244,16 +292,19 @@ const Teachers = () => {
               {filteredTeachers.map((teacher) => (
                 <tr key={teacher.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {teacher.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {teacher.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {teacher.cpf ? teacher.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {teacher.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {teacher.specialization || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {teacher.phone || '-'}
+                    {teacher.phone ? teacher.phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">

@@ -16,7 +16,11 @@ const Students = () => {
   const [generatedUsername, setGeneratedUsername] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
+  
+  // Observa as mudanças nos campos nome e RM para gerar credenciais
+  const watchName = watch('name');
+  const watchRm = watch('rm');
 
   useEffect(() => {
     fetchStudents();
@@ -30,6 +34,13 @@ const Students = () => {
     );
     setFilteredStudents(filtered);
   }, [searchTerm, students]);
+
+  // Gera credenciais automaticamente quando nome ou RM mudam
+  useEffect(() => {
+    if (!editingStudent && watchName && watchRm) {
+      generateCredentials(watchName, watchRm);
+    }
+  }, [watchName, watchRm, editingStudent]);
 
   const fetchStudents = async () => {
     try {
@@ -75,14 +86,8 @@ const Students = () => {
     try {
       // Gera username e password automaticamente para novos alunos
       if (!editingStudent) {
-        const firstName = data.name.split(' ')[0].toLowerCase();
-        const lastName = data.name.split(' ').slice(-1)[0].toLowerCase();
-        const username = `${firstName}.${lastName}`;
-        const password = `${firstName}${data.rm}`;
-        
-        // Adiciona os campos gerados aos dados
-        data.username = username;
-        data.password = password;
+        data.username = generatedUsername;
+        data.password = generatedPassword;
       }
       
       if (editingStudent) {
@@ -130,7 +135,18 @@ const Students = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingStudent(null);
-    reset();
+    setGeneratedUsername('');
+    setGeneratedPassword('');
+    reset({
+      name: '',
+      cpf: '',
+      rm: '',
+      ra: '',
+      email: '',
+      phone: '',
+      birthdate: '',
+      schoolClassId: ''
+    });
   };
 
   if (loading) {
@@ -174,7 +190,7 @@ const Students = () => {
         <div className="card">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              {editingStudent ? 'Editar Aluno' : 'Novo Aluno'}
+              {editingStudent ? 'Editar Aluno' : 'Cadastrar Aluno'}
             </h3>
             <button
               onClick={handleCancel}
@@ -209,7 +225,8 @@ const Students = () => {
                   type="text"
                   {...register('cpf', { required: 'CPF é obrigatório' })}
                   className="input"
-                  placeholder="CPF"
+                  placeholder="111.222.333-44"
+                  maxLength={11}
                 />
                 {errors.cpf && (
                   <p className="mt-1 text-sm text-red-600">{errors.cpf.message}</p>
@@ -225,6 +242,7 @@ const Students = () => {
                   {...register('rm', { required: 'RM é obrigatório' })}
                   className="input"
                   placeholder="RM"
+                  maxLength={5}
                 />
                 {errors.rm && (
                   <p className="mt-1 text-sm text-red-600">{errors.rm.message}</p>
@@ -240,6 +258,7 @@ const Students = () => {
                   {...register('ra', { required: 'RA é obrigatório' })}
                   className="input"
                   placeholder="RA"
+                  maxLength={13}
                 />
                 {errors.ra && (
                   <p className="mt-1 text-sm text-red-600">{errors.ra.message}</p>
@@ -276,6 +295,7 @@ const Students = () => {
                   {...register('phone')}
                   className="input"
                   placeholder="(11) 99999-9999"
+                  maxLength={11}
                 />
               </div>
 
@@ -290,13 +310,13 @@ const Students = () => {
                 />
               </div>
 
-                             <div>
+                <div>
                  <label className="block text-sm font-medium text-gray-700 mb-1">
                    Turma
                  </label>
                  <select
                    {...register('schoolClassId', { required: 'Turma é obrigatória' })}
-                   className="input"
+                   className="input bg-white"
                    disabled={loadingClasses}
                    defaultValue=""
                  >
@@ -325,15 +345,7 @@ const Students = () => {
                      <input
                        type="text"
                        className="input bg-gray-100 cursor-not-allowed"
-                       value={(() => {
-                         const name = document.querySelector('input[name="name"]')?.value || '';
-                         if (name) {
-                           const firstName = name.split(' ')[0].toLowerCase();
-                           const lastName = name.split(' ').slice(-1)[0].toLowerCase();
-                           return `${firstName}.${lastName}`;
-                         }
-                         return '';
-                       })()}
+                       value={generatedUsername}
                        readOnly
                        placeholder="Será gerado automaticamente"
                      />
@@ -349,15 +361,7 @@ const Students = () => {
                      <input
                        type="text"
                        className="input bg-gray-100 cursor-not-allowed"
-                       value={(() => {
-                         const name = document.querySelector('input[name="name"]')?.value || '';
-                         const rm = document.querySelector('input[name="rm"]')?.value || '';
-                         if (name && rm) {
-                           const firstName = name.split(' ')[0].toLowerCase();
-                           return `${firstName}${rm}`;
-                         }
-                         return '';
-                       })()}
+                       value={generatedPassword}
                        readOnly
                        placeholder="Será gerada automaticamente"
                      />
@@ -419,7 +423,7 @@ const Students = () => {
                   Turma
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ano Letivo
+                  Série/Ano
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Turno
@@ -457,10 +461,14 @@ const Students = () => {
                     {student.schoolClass ? `${student.schoolClass.name}` : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.schoolClass ? `${student.schoolClass.grade}` : '-'}
+                    {student.schoolClass.grade === 'FIRST_YEAR' ? 'Primeiro ano' : 
+                     student.schoolClass.grade === 'SECOND_YEAR' ? 'Segundo ano' : 
+                     student.schoolClass.grade === 'THIRD_YEAR' ? 'Terceiro ano' : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.schoolClass ? `${student.schoolClass.shift}` : '-'}
+                    {student.schoolClass.shift === 'MORNING' ? 'Manhã' : 
+                     student.schoolClass.shift === 'AFTERNOON' ? 'Tarde' : 
+                     student.schoolClass.shift === 'NIGHT' ? 'Noite' : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.birthdate ? new Date(student.birthdate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '-'}
