@@ -153,30 +153,6 @@ const Subjects = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Código
-                </label>
-                <input
-                  type="text"
-                  {...register('code')}
-                  className="input"
-                  placeholder="Ex: MAT001"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Descrição
-                </label>
-                <textarea
-                  {...register('description')}
-                  className="input"
-                  rows="3"
-                  placeholder="Descrição da disciplina..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Carga Horária (horas)
                 </label>
                 <input
@@ -184,19 +160,6 @@ const Subjects = () => {
                   {...register('workload')}
                   className="input"
                   placeholder="Ex: 80"
-                  min="1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Créditos
-                </label>
-                <input
-                  type="number"
-                  {...register('credits')}
-                  className="input"
-                  placeholder="Ex: 4"
                   min="1"
                 />
               </div>
@@ -234,6 +197,9 @@ const Subjects = () => {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Carga Horária
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -246,6 +212,9 @@ const Subjects = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {subject.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {subject.workload}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">

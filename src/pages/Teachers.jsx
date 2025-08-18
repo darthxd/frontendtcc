@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect, useMemo } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import Select from 'react-select';
 
 const Teachers = () => {
   const [teachers, setTeachers] = useState([]);
@@ -11,11 +12,15 @@ const Teachers = () => {
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredTeachers, setFilteredTeachers] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
+  const [expandedSubjectsRows, setExpandedSubjectsRows] = useState({});
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
 
   useEffect(() => {
     fetchTeachers();
+    fetchSubjects();
   }, []);
 
   useEffect(() => {
@@ -39,13 +44,63 @@ const Teachers = () => {
     }
   };
 
+  const fetchSubjects = async () => {
+    try {
+      const response = await api.get('/schoolsubject');
+      setSubjects(response.data || []);
+    } catch (error) {
+      toast.error('Erro ao carregar disciplinas');
+      console.error('Erro:', error);
+    } finally {
+      setLoadingSubjects(false);
+    }
+  };
+
+  const subjectOptions = useMemo(() => {
+    return (subjects || []).map((subject) => ({ value: subject.id, label: subject.name }));
+  }, [subjects]);
+
+  const getTeacherSubjectNames = (teacher) => {
+    if (teacher?.subjects && Array.isArray(teacher.subjects)) {
+      return teacher.subjects.map((s) => s?.name).filter(Boolean);
+    }
+    if (teacher?.subjectIds && Array.isArray(teacher.subjectIds)) {
+      const idToName = new Map((subjects || []).map((s) => [s.id, s.name]));
+      return teacher.subjectIds.map((id) => idToName.get(id)).filter(Boolean);
+    }
+    return [];
+  };
+
+  const toggleExpandedRow = (teacherId) => {
+    setExpandedSubjectsRows((prev) => ({ ...prev, [teacherId]: !prev[teacherId] }));
+  };
+
+  const openCreateForm = () => {
+    setEditingTeacher(null);
+    reset({
+      username: '',
+      password: '',
+      name: '',
+      cpf: '',
+      email: '',
+      phone: '',
+      birthdate: '',
+      subjectIds: [],
+    });
+    setShowForm(true);
+  };
+
   const onSubmit = async (data) => {
     try {
+      const payload = {
+        ...data,
+        subjectIds: (data.subjectIds || []).map((id) => Number(id)),
+      };
       if (editingTeacher) {
-        await api.put(`/teachers/${editingTeacher.id}`, data);
+        await api.put(`/teachers/${editingTeacher.id}`, payload);
         toast.success('Professor atualizado com sucesso!');
       } else {
-        await api.post('/teachers', data);
+        await api.post('/teachers', payload);
         toast.success('Professor criado com sucesso!');
       }
       
@@ -59,10 +114,31 @@ const Teachers = () => {
     }
   };
 
-  const handleEdit = (teacher) => {
+  const handleEdit = async (teacher) => {
     setEditingTeacher(teacher);
-    reset(teacher);
     setShowForm(true);
+
+    // Preenche o formulário com dados básicos imediatamente
+    reset({
+      ...teacher,
+      subjectIds: teacher.subjectIds || (teacher.subjects ? teacher.subjects.map((s) => s.id) : []),
+    });
+
+    // Busca detalhes atualizados, garantindo subjectIds para o select
+    try {
+      const response = await api.get(`/teachers/${teacher.id}`);
+      const full = response.data || {};
+      const inferredSubjectIds = full.subjectIds || (full.subjects ? full.subjects.map((s) => s.id) : []);
+      reset({
+        ...teacher,
+        ...full,
+        subjectIds: inferredSubjectIds || [],
+      });
+    } catch (error) {
+      // Se falhar, mantém os dados já preenchidos
+      console.error('Erro ao carregar detalhes do professor:', error);
+      toast.error('Não foi possível carregar as disciplinas do professor.');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -88,7 +164,8 @@ const Teachers = () => {
       cpf: '',
       email: '',
       phone: '',
-      birthdate: ''
+      birthdate: '',
+      subjectIds: []
     });
   };
 
@@ -241,6 +318,31 @@ const Teachers = () => {
                   maxLength={11}
                 />
               </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Disciplinas que leciona
+                </label>
+                <Controller
+                  control={control}
+                  name="subjectIds"
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <Select
+                      isMulti
+                      isClearable
+                      isLoading={loadingSubjects}
+                      options={subjectOptions}
+                      value={subjectOptions.filter((opt) => (field.value || []).includes(opt.value))}
+                      onChange={(selected) => field.onChange((selected || []).map((opt) => opt.value))}
+                      classNamePrefix="rs"
+                      placeholder="Selecione as disciplinas..."
+                      noOptionsMessage={() => 'Nenhuma disciplina encontrada'}
+                    />
+                  )}
+                />
+                <p className="mt-1 text-xs text-gray-500">Você pode buscar pelo nome e selecionar múltiplas opções.</p>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3">
@@ -284,6 +386,9 @@ const Teachers = () => {
                   Telefone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Disciplinas
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -305,6 +410,31 @@ const Teachers = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {teacher.phone ? teacher.phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs">
+                    {(() => {
+                      const names = getTeacherSubjectNames(teacher);
+                      if (!names.length) return '-';
+                      const fullText = names.join(', ');
+                      const isExpanded = !!expandedSubjectsRows[teacher.id];
+                      const LIMIT = 60;
+                      const shouldTruncate = fullText.length > LIMIT;
+                      const textToShow = isExpanded || !shouldTruncate ? fullText : `${fullText.slice(0, LIMIT)}...`;
+                      return (
+                        <div className="flex items-center space-x-2">
+                          <span className="truncate" title={fullText}>{textToShow}</span>
+                          {shouldTruncate && (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpandedRow(teacher.id)}
+                              className="text-primary-600 hover:text-primary-900 text-xs underline"
+                            >
+                              {isExpanded ? 'ver menos' : 'ver mais'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
