@@ -1,38 +1,44 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
-import api from '../services/api';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { Plus, Edit, Trash2, Search, X } from "lucide-react";
+import api from "../services/api";
+import toast from "react-hot-toast";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filteredClasses, setFilteredClasses] = useState([]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
     fetchClasses();
   }, []);
 
   useEffect(() => {
-    const filtered = classes.filter(cls =>
-      cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cls.grade?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = classes.filter(
+      (cls) =>
+        cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cls.grade?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredClasses(filtered);
   }, [searchTerm, classes]);
 
   const fetchClasses = async () => {
     try {
-      const response = await api.get('/schoolclass');
+      const response = await api.get("/schoolclass");
       setClasses(response.data);
     } catch (error) {
-      toast.error('Erro ao carregar turmas');
-      console.error('Erro:', error);
+      toast.error("Erro ao carregar turmas");
+      console.error("Erro:", error);
     } finally {
       setLoading(false);
     }
@@ -42,19 +48,19 @@ const Classes = () => {
     try {
       if (editingClass) {
         await api.put(`/schoolclass/${editingClass.id}`, data);
-        toast.success('Turma atualizada com sucesso!');
+        toast.success("Turma atualizada com sucesso!");
       } else {
-        await api.post('/schoolclass', data);
-        toast.success('Turma criada com sucesso!');
+        await api.post("/schoolclass", data);
+        toast.success("Turma criada com sucesso!");
       }
-      
+
       setShowForm(false);
       setEditingClass(null);
       reset();
       fetchClasses();
     } catch (error) {
-      toast.error('Erro ao salvar turma');
-      console.error('Erro:', error);
+      toast.error("Erro ao salvar turma");
+      console.error("Erro:", error);
     }
   };
 
@@ -65,14 +71,14 @@ const Classes = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta turma?')) {
+    if (window.confirm("Tem certeza que deseja excluir esta turma?")) {
       try {
         await api.delete(`/schoolclass/${id}`);
-        toast.success('Turma excluída com sucesso!');
+        toast.success("Turma excluída com sucesso!");
         fetchClasses();
       } catch (error) {
-        toast.error('Erro ao excluir turma');
-        console.error('Erro:', error);
+        toast.error("Erro ao excluir turma");
+        console.error("Erro:", error);
       }
     }
   };
@@ -103,7 +109,7 @@ const Classes = () => {
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Nova Turma
+          Cadastrar Turma
         </button>
       </div>
 
@@ -124,7 +130,7 @@ const Classes = () => {
         <div className="card">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              {editingClass ? 'Editar Turma' : 'Nova Turma'}
+              {editingClass ? "Editar Turma" : "Cadastrar Turma"}
             </h3>
             <button
               onClick={handleCancel}
@@ -138,27 +144,9 @@ const Classes = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome da Turma
-                </label>
-                <input
-                  type="text"
-                  {...register('name', { required: 'Nome é obrigatório' })}
-                  className="input"
-                  placeholder="Ex: 1º Ano A"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Série/Ano
                 </label>
-                <select
-                  {...register('grade')}
-                  className="input bg-white"
-                >
+                <select {...register("grade")} className="input bg-white">
                   <option value="">Selecione a série/ano</option>
                   <option value="FIRST_YEAR">Primeiro ano</option>
                   <option value="SECOND_YEAR">Segundo ano</option>
@@ -170,10 +158,7 @@ const Classes = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Turno
                 </label>
-                <select
-                  {...register('shift')}
-                  className="input bg-white"
-                >
+                <select {...register("shift")} className="input bg-white">
                   <option value="">Selecione o turno</option>
                   <option value="MORNING">Manhã</option>
                   <option value="AFTERNOON">Tarde</option>
@@ -185,10 +170,7 @@ const Classes = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Curso
                 </label>
-                <select
-                  {...register('course')}
-                  className="input bg-white"
-                >
+                <select {...register("course")} className="input bg-white">
                   <option value="">Selecione o curso</option>
                   <option value="ADM">ADM - Administração</option>
                   <option value="BIO">BIO - Biologia</option>
@@ -213,11 +195,8 @@ const Classes = () => {
               >
                 Cancelar
               </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-              >
-                {editingClass ? 'Atualizar' : 'Criar'}
+              <button type="submit" className="btn btn-primary">
+                {editingClass ? "Atualizar" : "Criar"}
               </button>
             </div>
           </form>
@@ -230,6 +209,9 @@ const Classes = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Código
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nome
                 </th>
@@ -251,20 +233,31 @@ const Classes = () => {
               {filteredClasses.map((cls) => (
                 <tr key={cls.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {cls.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {cls.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cls.grade === 'FIRST_YEAR' ? 'Primeiro ano' : 
-                     cls.grade === 'SECOND_YEAR' ? 'Segundo ano' : 
-                     cls.grade === 'THIRD_YEAR' ? 'Terceiro ano' : '-'}
+                    {cls.grade === "FIRST_YEAR"
+                      ? "Primeiro ano"
+                      : cls.grade === "SECOND_YEAR"
+                        ? "Segundo ano"
+                        : cls.grade === "THIRD_YEAR"
+                          ? "Terceiro ano"
+                          : "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cls.shift === 'MORNING' ? 'Manhã' : 
-                     cls.shift === 'AFTERNOON' ? 'Tarde' : 
-                     cls.shift === 'NIGHT' ? 'Noite' : '-'}
+                    {cls.shift === "MORNING"
+                      ? "Manhã"
+                      : cls.shift === "AFTERNOON"
+                        ? "Tarde"
+                        : cls.shift === "NIGHT"
+                          ? "Noite"
+                          : "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cls.course || '-'}
+                    {cls.course || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
@@ -288,11 +281,13 @@ const Classes = () => {
               ))}
             </tbody>
           </table>
-          
+
           {filteredClasses.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">
-                {searchTerm ? 'Nenhuma turma encontrada para esta pesquisa.' : 'Nenhuma turma cadastrada.'}
+                {searchTerm
+                  ? "Nenhuma turma encontrada para esta pesquisa."
+                  : "Nenhuma turma cadastrada."}
               </p>
             </div>
           )}

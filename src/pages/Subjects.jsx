@@ -1,38 +1,44 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
-import api from '../services/api';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { Plus, Edit, Trash2, Search, X } from "lucide-react";
+import api from "../services/api";
+import toast from "react-hot-toast";
 
 const Subjects = () => {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filteredSubjects, setFilteredSubjects] = useState([]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
     fetchSubjects();
   }, []);
 
   useEffect(() => {
-    const filtered = subjects.filter(subject =>
-      subject.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subject.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = subjects.filter(
+      (subject) =>
+        subject.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        subject.description?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredSubjects(filtered);
   }, [searchTerm, subjects]);
 
   const fetchSubjects = async () => {
     try {
-      const response = await api.get('/schoolsubject');
+      const response = await api.get("/schoolsubject");
       setSubjects(response.data);
     } catch (error) {
-      toast.error('Erro ao carregar disciplinas');
-      console.error('Erro:', error);
+      toast.error("Erro ao carregar disciplinas");
+      console.error("Erro:", error);
     } finally {
       setLoading(false);
     }
@@ -42,19 +48,19 @@ const Subjects = () => {
     try {
       if (editingSubject) {
         await api.put(`/schoolsubject/${editingSubject.id}`, data);
-        toast.success('Disciplina atualizada com sucesso!');
+        toast.success("Disciplina atualizada com sucesso!");
       } else {
-        await api.post('/schoolsubject', data);
-        toast.success('Disciplina criada com sucesso!');
+        await api.post("/schoolsubject", data);
+        toast.success("Disciplina criada com sucesso!");
       }
-      
+
       setShowForm(false);
       setEditingSubject(null);
       reset();
       fetchSubjects();
     } catch (error) {
-      toast.error('Erro ao salvar disciplina');
-      console.error('Erro:', error);
+      toast.error("Erro ao salvar disciplina");
+      console.error("Erro:", error);
     }
   };
 
@@ -65,14 +71,14 @@ const Subjects = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta disciplina?')) {
+    if (window.confirm("Tem certeza que deseja excluir esta disciplina?")) {
       try {
         await api.delete(`/schoolsubject/${id}`);
-        toast.success('Disciplina excluída com sucesso!');
+        toast.success("Disciplina excluída com sucesso!");
         fetchSubjects();
       } catch (error) {
-        toast.error('Erro ao excluir disciplina');
-        console.error('Erro:', error);
+        toast.error("Erro ao excluir disciplina");
+        console.error("Erro:", error);
       }
     }
   };
@@ -95,7 +101,9 @@ const Subjects = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Disciplinas</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gerenciar Disciplinas
+          </h1>
           <p className="text-gray-600">Gerencie as disciplinas do sistema</p>
         </div>
         <button
@@ -103,7 +111,7 @@ const Subjects = () => {
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Nova Disciplina
+          Cadastrar Disciplina
         </button>
       </div>
 
@@ -124,7 +132,7 @@ const Subjects = () => {
         <div className="card">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              {editingSubject ? 'Editar Disciplina' : 'Nova Disciplina'}
+              {editingSubject ? "Editar Disciplina" : "Cadastrar Disciplina"}
             </h3>
             <button
               onClick={handleCancel}
@@ -142,12 +150,14 @@ const Subjects = () => {
                 </label>
                 <input
                   type="text"
-                  {...register('name', { required: 'Nome é obrigatório' })}
+                  {...register("name", { required: "Nome é obrigatório" })}
                   className="input"
                   placeholder="Ex: Matemática"
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
 
@@ -157,7 +167,7 @@ const Subjects = () => {
                 </label>
                 <input
                   type="number"
-                  {...register('workload')}
+                  {...register("workload")}
                   className="input"
                   placeholder="Ex: 80"
                   min="1"
@@ -173,11 +183,8 @@ const Subjects = () => {
               >
                 Cancelar
               </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-              >
-                {editingSubject ? 'Atualizar' : 'Criar'}
+              <button type="submit" className="btn btn-primary">
+                {editingSubject ? "Atualizar" : "Criar"}
               </button>
             </div>
           </form>
@@ -197,7 +204,7 @@ const Subjects = () => {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Carga Horária
+                  Carga Horária (Em Horas)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
@@ -208,13 +215,13 @@ const Subjects = () => {
               {filteredSubjects.map((subject) => (
                 <tr key={subject.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {subject.id || '-'}
+                    {subject.id || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {subject.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {subject.workload}
+                    {subject.workload}h
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
@@ -238,11 +245,13 @@ const Subjects = () => {
               ))}
             </tbody>
           </table>
-          
+
           {filteredSubjects.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">
-                {searchTerm ? 'Nenhuma disciplina encontrada para esta pesquisa.' : 'Nenhuma disciplina cadastrada.'}
+                {searchTerm
+                  ? "Nenhuma disciplina encontrada para esta pesquisa."
+                  : "Nenhuma disciplina cadastrada."}
               </p>
             </div>
           )}

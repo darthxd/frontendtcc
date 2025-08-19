@@ -1,38 +1,63 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Menu, 
-  X, 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Menu,
+  X,
+  Users,
+  GraduationCap,
+  BookOpen,
   Home,
   LogOut,
-  User
-} from 'lucide-react';
-import { authService } from '../services/authService';
+  User,
+  ClipboardCheck,
+} from "lucide-react";
+import { authService } from "../services/authService";
+import api from "../services/api";
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [detailedUser, setDetailedUser] = useState();
   const location = useLocation();
   const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Alunos', href: '/students', icon: Users, role: 'ROLE_ADMIN' },
-    { name: 'Professores', href: '/teachers', icon: GraduationCap, role: 'ROLE_ADMIN' },
-    { name: 'Turmas', href: '/classes', icon: BookOpen, role: 'ROLE_ADMIN' },
-    { name: 'Disciplinas', href: '/subjects', icon: BookOpen, role: 'ROLE_ADMIN' },
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    {
+      name: "Minhas Turmas",
+      href: "/teacher-dashboard",
+      icon: BookOpen,
+      role: "ROLE_TEACHER",
+    },
+    {
+      name: "Fazer Chamada",
+      href: "/attendance-call",
+      icon: ClipboardCheck,
+      role: "ROLE_TEACHER",
+    },
+    { name: "Alunos", href: "/students", icon: Users, role: "ROLE_ADMIN" },
+    {
+      name: "Professores",
+      href: "/teachers",
+      icon: GraduationCap,
+      role: "ROLE_ADMIN",
+    },
+    { name: "Turmas", href: "/classes", icon: BookOpen, role: "ROLE_ADMIN" },
+    {
+      name: "Disciplinas",
+      href: "/subjects",
+      icon: BookOpen,
+      role: "ROLE_ADMIN",
+    },
   ];
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/login');
+    navigate("/login");
   };
 
-  const filteredNavigation = navigation.filter(item => 
-    !item.role || authService.hasRole(item.role)
+  const filteredNavigation = navigation.filter(
+    (item) => !item.role || authService.hasRole(item.role),
   );
 
   return (
@@ -42,7 +67,9 @@ const Layout = ({ children }) => {
         <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4">
-              <h1 className="text-xl font-bold text-gray-900">Sistema Escolar</h1>
+              <h1 className="text-xl font-bold text-gray-900">
+                Sistema Escolar
+              </h1>
             </div>
             <nav className="mt-5 flex-1 px-2 space-y-1">
               {filteredNavigation.map((item) => {
@@ -53,13 +80,15 @@ const Layout = ({ children }) => {
                     to={item.href}
                     className={`${
                       isActive
-                        ? 'bg-primary-100 text-primary-900'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? "bg-primary-100 text-primary-900"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
                   >
                     <item.icon
                       className={`${
-                        isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                        isActive
+                          ? "text-primary-500"
+                          : "text-gray-400 group-hover:text-gray-500"
                       } mr-3 flex-shrink-0 h-6 w-6`}
                     />
                     {item.name}
@@ -74,8 +103,18 @@ const Layout = ({ children }) => {
                 <User className="h-8 w-8 text-gray-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">{currentUser?.username}</p>
-                <p className="text-xs text-gray-500">{currentUser?.role}</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {currentUser.username}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {currentUser?.role === "ROLE_ADMIN"
+                    ? "Administrador"
+                    : currentUser?.role === "ROLE_TEACHER"
+                      ? "Professor"
+                      : currentUser?.role === "ROLE_STUDENT"
+                        ? "Aluno"
+                        : "-"}
+                </p>
               </div>
             </div>
           </div>
@@ -124,7 +163,9 @@ const Layout = ({ children }) => {
               </div>
               <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
                 <div className="flex-shrink-0 flex items-center px-4">
-                  <h1 className="text-xl font-bold text-gray-900">Sistema Escolar</h1>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Sistema Escolar
+                  </h1>
                 </div>
                 <nav className="mt-5 px-2 space-y-1">
                   {filteredNavigation.map((item) => {
@@ -135,14 +176,16 @@ const Layout = ({ children }) => {
                         to={item.href}
                         className={`${
                           isActive
-                            ? 'bg-primary-100 text-primary-900'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? "bg-primary-100 text-primary-900"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
                         onClick={() => setSidebarOpen(false)}
                       >
                         <item.icon
                           className={`${
-                            isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                            isActive
+                              ? "text-primary-500"
+                              : "text-gray-400 group-hover:text-gray-500"
                           } mr-4 flex-shrink-0 h-6 w-6`}
                         />
                         {item.name}
@@ -157,8 +200,18 @@ const Layout = ({ children }) => {
                     <User className="h-8 w-8 text-gray-400" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-base font-medium text-gray-700">{currentUser?.username}</p>
-                    <p className="text-sm text-gray-500">{currentUser?.role}</p>
+                    <p className="text-base font-medium text-gray-700">
+                      {currentUser.username}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {currentUser?.role === "ROLE_ADMIN"
+                        ? "Administrador"
+                        : currentUser?.role === "ROLE_TEACHER"
+                          ? "Professor"
+                          : currentUser?.role === "ROLE_STUDENT"
+                            ? "Aluno"
+                            : "-"}
+                    </p>
                   </div>
                 </div>
               </div>

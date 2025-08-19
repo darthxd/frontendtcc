@@ -1,16 +1,23 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { useEffect, useState } from 'react';
-import { authService } from './services/authService';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Students from './pages/Students';
-import Teachers from './pages/Teachers';
-import Classes from './pages/Classes';
-import Subjects from './pages/Subjects';
-import Unauthorized from './pages/Unauthorized';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { useEffect, useState } from "react";
+import { authService } from "./services/authService";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import AttendanceCall from "./pages/AttendanceCall";
+import Students from "./pages/Students";
+import Teachers from "./pages/Teachers";
+import Classes from "./pages/Classes";
+import Subjects from "./pages/Subjects";
+import Unauthorized from "./pages/Unauthorized";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -42,21 +49,21 @@ function App() {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
-              color: '#fff',
+              background: "#363636",
+              color: "#fff",
             },
             success: {
               duration: 3000,
               iconTheme: {
-                primary: '#10B981',
-                secondary: '#fff',
+                primary: "#10B981",
+                secondary: "#fff",
               },
             },
             error: {
               duration: 5000,
               iconTheme: {
-                primary: '#EF4444',
-                secondary: '#fff',
+                primary: "#EF4444",
+                secondary: "#fff",
               },
             },
           }}
@@ -64,11 +71,11 @@ function App() {
 
         <Routes>
           {/* Rota pública */}
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
               isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-            } 
+            }
           />
 
           {/* Rota de erro */}
@@ -80,7 +87,33 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Dashboard />
+                  {authService.isTeacher() ? (
+                    <TeacherDashboard />
+                  ) : (
+                    <Dashboard />
+                  )}
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/teacher-dashboard"
+            element={
+              <ProtectedRoute requiredRole="ROLE_TEACHER">
+                <Layout>
+                  <TeacherDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/attendance-call"
+            element={
+              <ProtectedRoute requiredRole="ROLE_TEACHER">
+                <Layout>
+                  <AttendanceCall />
                 </Layout>
               </ProtectedRoute>
             }
@@ -131,16 +164,10 @@ function App() {
           />
 
           {/* Redirecionamento padrão */}
-          <Route 
-            path="/" 
-            element={<Navigate to="/dashboard" replace />} 
-          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           {/* Rota para qualquer caminho não encontrado */}
-          <Route 
-            path="*" 
-            element={<Navigate to="/dashboard" replace />} 
-          />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>
     </Router>
