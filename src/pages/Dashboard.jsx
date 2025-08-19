@@ -20,7 +20,7 @@ const Dashboard = () => {
           const [studentsRes, teachersRes, classesRes, subjectsRes] =
             await Promise.all([
               api.get("/student"),
-              api.get("/teachers"),
+              api.get("/teacher"),
               api.get("/schoolclass"),
               api.get("/schoolsubject"),
             ]);

@@ -105,7 +105,7 @@ const AttendanceCall = () => {
     if (!selectedClass || !selectedDate) return;
 
     try {
-      const response = await api.get("/attendances");
+      const response = await api.get("/attendance");
       const allAttendances = response.data;
       const classAttendances = allAttendances.filter(
         (attendance) =>
@@ -115,22 +115,12 @@ const AttendanceCall = () => {
 
       setExistingAttendances(classAttendances);
 
-      // Verificar se a chamada está bloqueada (já foi finalizada)
+      // Verificar se a chamada está bloqueada (já existe chamada para esta data/turma)
       if (classAttendances.length > 0) {
-        // Se existem attendances para todos os alunos da turma, considerar como finalizada
-        const studentsInClass = students.length;
-        const isComplete =
-          classAttendances.length === studentsInClass && studentsInClass > 0;
-
-        if (isComplete) {
-          setIsCallLocked(true);
-          setLockMessage(
-            `Chamada já finalizada em ${new Date(classAttendances[0].date).toLocaleDateString("pt-BR")}. Para alterações, entre em contato com a administração.`,
-          );
-        } else {
-          setIsCallLocked(false);
-          setLockMessage("");
-        }
+        setIsCallLocked(true);
+        setLockMessage(
+          `Chamada já registrada em ${new Date(classAttendances[0].date).toLocaleDateString("pt-BR")}. Para alterações, entre em contato com a administração.`,
+        );
       } else {
         setIsCallLocked(false);
         setLockMessage("");
@@ -185,16 +175,18 @@ const AttendanceCall = () => {
 
     setSaving(true);
     try {
-      // Criar array de attendances para enviar
-      const attendanceList = students.map((student) => ({
-        teacherId: teacherData.id,
-        studentId: student.id,
-        schoolClassId: parseInt(selectedClass),
+      // Criar objeto no novo formato da API
+      const attendancePayload = {
         date: selectedDate,
-        present: attendanceData[student.id] || false,
-      }));
+        schoolClassId: parseInt(selectedClass),
+        teacherId: teacherData.id,
+        presences: students.map((student) => ({
+          studentId: student.id,
+          present: attendanceData[student.id] || false,
+        })),
+      };
 
-      await api.post("/attendance/list", attendanceList);
+      await api.post("/attendance", attendancePayload);
       toast.success("Chamada salva com sucesso!");
 
       // Atualizar attendances existentes

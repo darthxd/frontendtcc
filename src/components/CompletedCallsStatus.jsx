@@ -7,7 +7,7 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
   const [completedCalls, setCompletedCalls] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7) // YYYY-MM format
+    new Date().toISOString().slice(0, 7), // YYYY-MM format
   );
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
     setLoading(true);
     try {
       // Buscar todas as presenças
-      const response = await api.get("/attendances");
+      const response = await api.get("/attendance");
       const allAttendances = response.data;
 
       // Buscar todos os alunos
@@ -34,7 +34,7 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
       const monthEnd = new Date(
         monthStart.getFullYear(),
         monthStart.getMonth() + 1,
-        0
+        0,
       );
 
       const teacherAttendances = allAttendances.filter((attendance) => {
@@ -47,34 +47,37 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
       });
 
       // Agrupar por data e turma
-      const groupedAttendances = teacherAttendances.reduce((acc, attendance) => {
-        const key = `${attendance.date}-${attendance.schoolClassId}`;
-        if (!acc[key]) {
-          acc[key] = {
-            date: attendance.date,
-            schoolClassId: attendance.schoolClassId,
-            attendances: [],
-          };
-        }
-        acc[key].attendances.push(attendance);
-        return acc;
-      }, {});
+      const groupedAttendances = teacherAttendances.reduce(
+        (acc, attendance) => {
+          const key = `${attendance.date}-${attendance.schoolClassId}`;
+          if (!acc[key]) {
+            acc[key] = {
+              date: attendance.date,
+              schoolClassId: attendance.schoolClassId,
+              attendances: [],
+            };
+          }
+          acc[key].attendances.push(attendance);
+          return acc;
+        },
+        {},
+      );
 
       // Verificar quais chamadas estão completas
       const completedCallsData = Object.values(groupedAttendances)
         .map((group) => {
           // Contar alunos da turma
           const classStudents = allStudents.filter((student) =>
-            student.schoolClassIds?.includes(group.schoolClassId)
+            student.schoolClassIds?.includes(group.schoolClassId),
           );
 
-          const className = teacherClasses.find(
-            (cls) => cls.id === group.schoolClassId
-          )?.name || `Turma ${group.schoolClassId}`;
+          const className =
+            teacherClasses.find((cls) => cls.id === group.schoolClassId)
+              ?.name || `Turma ${group.schoolClassId}`;
 
           const isComplete = group.attendances.length === classStudents.length;
           const presentCount = group.attendances.filter(
-            (att) => att.present
+            (att) => att.present,
           ).length;
           const absentCount = group.attendances.length - presentCount;
 
@@ -86,9 +89,10 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
             totalStudents: classStudents.length,
             presentCount,
             absentCount,
-            attendanceRate: classStudents.length > 0
-              ? Math.round((presentCount / classStudents.length) * 100)
-              : 0,
+            attendanceRate:
+              classStudents.length > 0
+                ? Math.round((presentCount / classStudents.length) * 100)
+                : 0,
           };
         })
         .filter((call) => call.isComplete)
@@ -186,15 +190,23 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
                 {Math.round(
-                  completedCalls.reduce((acc, call) => acc + call.attendanceRate, 0) /
-                  completedCalls.length || 0
-                )}%
+                  completedCalls.reduce(
+                    (acc, call) => acc + call.attendanceRate,
+                    0,
+                  ) / completedCalls.length || 0,
+                )}
+                %
               </div>
-              <div className="text-sm text-green-600">Taxa Média de Presença</div>
+              <div className="text-sm text-green-600">
+                Taxa Média de Presença
+              </div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {[...new Set(completedCalls.map((call) => call.schoolClassId))].length}
+                {
+                  [...new Set(completedCalls.map((call) => call.schoolClassId))]
+                    .length
+                }
               </div>
               <div className="text-sm text-purple-600">Turmas Ativas</div>
             </div>
@@ -214,7 +226,9 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
 
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h4 className="font-medium text-gray-900">{call.className}</h4>
+                    <h4 className="font-medium text-gray-900">
+                      {call.className}
+                    </h4>
                     <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
                       ID: {call.schoolClassId}
                     </span>
@@ -263,12 +277,14 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
             <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
           </div>
           <div>
-            <h4 className="font-medium text-blue-800">Sobre Chamadas Finalizadas</h4>
+            <h4 className="font-medium text-blue-800">
+              Sobre Chamadas Finalizadas
+            </h4>
             <p className="text-sm text-blue-700 mt-1">
-              Chamadas são automaticamente finalizadas quando todos os alunos da turma
-              têm sua presença registrada. Uma vez finalizadas, não podem ser editadas
-              para manter a integridade dos dados. Para alterações, entre em contato
-              com a administração.
+              Chamadas são automaticamente finalizadas quando todos os alunos da
+              turma têm sua presença registrada. Uma vez finalizadas, não podem
+              ser editadas para manter a integridade dos dados. Para alterações,
+              entre em contato com a administração.
             </p>
           </div>
         </div>

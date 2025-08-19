@@ -159,10 +159,10 @@ const Teachers = () => {
         schoolClassIds: (data.schoolClassIds || []).map((id) => Number(id)),
       };
       if (editingTeacher) {
-        await api.put(`/teachers/${editingTeacher.id}`, payload);
+        await api.put(`/teacher/${editingTeacher.id}`, payload);
         toast.success("Professor atualizado com sucesso!");
       } else {
-        await api.post("/teachers", payload);
+        await api.post("/teacher", payload);
         toast.success("Professor criado com sucesso!");
       }
 
@@ -193,7 +193,7 @@ const Teachers = () => {
 
     // Busca detalhes atualizados, garantindo subjectIds para o select
     try {
-      const response = await api.get(`/teachers/${teacher.id}`);
+      const response = await api.get(`/teacher/${teacher.id}`);
       const full = response.data || {};
       const inferredSubjectIds =
         full.subjectIds ||
