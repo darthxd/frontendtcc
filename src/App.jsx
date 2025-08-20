@@ -5,7 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { authService } from "./services/authService";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
@@ -19,19 +19,8 @@ import Classes from "./pages/Classes";
 import Subjects from "./pages/Subjects";
 import Unauthorized from "./pages/Unauthorized";
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = authService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
+function AppContent() {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -87,22 +76,19 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  {authService.isTeacher() ? (
-                    <TeacherDashboard />
-                  ) : (
-                    <Dashboard />
-                  )}
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/teacher-dashboard"
-            element={
-              <ProtectedRoute requiredRole="ROLE_TEACHER">
-                <Layout>
-                  <TeacherDashboard />
+                  {(() => {
+                    const role = user?.role;
+                    switch (role) {
+                      case "ROLE_ADMIN":
+                        return <Dashboard />;
+                      case "ROLE_TEACHER":
+                        return <TeacherDashboard />;
+                      case "ROLE_STUDENT":
+                        return <Dashboard />;
+                      default:
+                        return <Navigate to="/login" replace />;
+                    }
+                  })()}
                 </Layout>
               </ProtectedRoute>
             }
@@ -171,6 +157,14 @@ function App() {
         </Routes>
       </div>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

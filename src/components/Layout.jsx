@@ -10,8 +10,9 @@ import {
   LogOut,
   User,
   ClipboardCheck,
+  Rocket,
 } from "lucide-react";
-import { authService } from "../services/authService";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
 const Layout = ({ children }) => {
@@ -19,16 +20,10 @@ const Layout = ({ children }) => {
   const [detailedUser, setDetailedUser] = useState();
   const location = useLocation();
   const navigate = useNavigate();
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser, logout, hasRole } = useAuth();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
-    {
-      name: "Minhas Turmas",
-      href: "/teacher-dashboard",
-      icon: BookOpen,
-      role: "ROLE_TEACHER",
-    },
     {
       name: "Fazer Chamada",
       href: "/attendance-call",
@@ -52,12 +47,12 @@ const Layout = ({ children }) => {
   ];
 
   const handleLogout = () => {
-    authService.logout();
+    logout();
     navigate("/login");
   };
 
   const filteredNavigation = navigation.filter(
-    (item) => !item.role || authService.hasRole(item.role),
+    (item) => !item.role || hasRole(item.role),
   );
 
   return (

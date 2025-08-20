@@ -11,7 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import toast from "react-hot-toast";
-import { authService } from "../services/authService";
+import { useAuth } from "../contexts/AuthContext";
 import AttendanceHistory from "../components/AttendanceHistory";
 import TeacherStats from "../components/TeacherStats";
 import CompletedCallsStatus from "../components/CompletedCallsStatus";
@@ -22,7 +22,7 @@ const TeacherDashboard = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     fetchTeacherData();

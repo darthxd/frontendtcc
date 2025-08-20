@@ -1,28 +1,33 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Lock, User } from 'lucide-react';
-import { authService } from '../services/authService';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import toast from "react-hot-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const { register, handleSubmit, formState: { errors } } = useForm();
-  
-  const from = location.state?.from?.pathname || '/dashboard';
+  const { login } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await authService.login(data.username, data.password);
-      toast.success('Login realizado com sucesso!');
+      await login(data.username, data.password);
+      toast.success("Login realizado com sucesso!");
       navigate(from, { replace: true });
     } catch (error) {
-      toast.error(error.message || 'Erro ao fazer login');
+      toast.error(error.message || "Erro ao fazer login");
     } finally {
       setIsLoading(false);
     }
@@ -42,11 +47,14 @@ const Login = () => {
             Faça login para acessar o sistema
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Usuário
               </label>
               <div className="mt-1 relative">
@@ -56,18 +64,25 @@ const Login = () => {
                 <input
                   id="username"
                   type="text"
-                  {...register('username', { required: 'Usuário é obrigatório' })}
+                  {...register("username", {
+                    required: "Usuário é obrigatório",
+                  })}
                   className="input pl-10"
                   placeholder="Digite seu usuário"
                 />
               </div>
               {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.username.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Senha
               </label>
               <div className="mt-1 relative">
@@ -76,8 +91,8 @@ const Login = () => {
                 </div>
                 <input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  {...register('password', { required: 'Senha é obrigatória' })}
+                  type={showPassword ? "text" : "password"}
+                  {...register("password", { required: "Senha é obrigatória" })}
                   className="input pl-10 pr-10"
                   placeholder="Digite sua senha"
                 />
@@ -94,7 +109,9 @@ const Login = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
           </div>
@@ -108,7 +125,7 @@ const Login = () => {
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
-                'Entrar'
+                "Entrar"
               )}
             </button>
           </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Users, GraduationCap, BookOpen, School } from "lucide-react";
 import api from "../services/api";
-import { authService } from "../services/authService";
+import { useAuth } from "../contexts/AuthContext";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -11,12 +11,12 @@ const Dashboard = () => {
     subjects: 0,
   });
   const [loading, setLoading] = useState(true);
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser, isAdmin } = useAuth();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        if (authService.isAdmin()) {
+        if (isAdmin()) {
           const [studentsRes, teachersRes, classesRes, subjectsRes] =
             await Promise.all([
               api.get("/student"),
@@ -67,7 +67,7 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {authService.isAdmin() && (
+      {isAdmin() && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total de Alunos"
@@ -126,7 +126,7 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex items-center">
               <div
-                className={`w-3 h-3 rounded-full mr-3 ${authService.isAdmin() ? "bg-green-500" : "bg-gray-300"}`}
+                className={`w-3 h-3 rounded-full mr-3 ${currentUser?.role === "ROLE_ADMIN" ? "bg-green-500" : "bg-gray-300"}`}
               ></div>
               <span className="text-sm text-gray-600">
                 Acesso Administrativo
@@ -134,13 +134,13 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center">
               <div
-                className={`w-3 h-3 rounded-full mr-3 ${authService.isTeacher() ? "bg-green-500" : "bg-gray-300"}`}
+                className={`w-3 h-3 rounded-full mr-3 ${currentUser?.role === "ROLE_TEACHER" ? "bg-green-500" : "bg-gray-300"}`}
               ></div>
               <span className="text-sm text-gray-600">Acesso de Professor</span>
             </div>
             <div className="flex items-center">
               <div
-                className={`w-3 h-3 rounded-full mr-3 ${authService.isStudent() ? "bg-green-500" : "bg-gray-300"}`}
+                className={`w-3 h-3 rounded-full mr-3 ${currentUser?.role === "ROLE_STUDENT" ? "bg-green-500" : "bg-gray-300"}`}
               ></div>
               <span className="text-sm text-gray-600">Acesso de Aluno</span>
             </div>
@@ -148,7 +148,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {!authService.isAdmin() && (
+      {!isAdmin() && (
         <div className="card">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             Acesso Limitado
