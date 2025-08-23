@@ -11,6 +11,7 @@ import {
   User,
   ClipboardCheck,
   Rocket,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
@@ -24,6 +25,18 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
+    {
+      name: "Atividades",
+      href: "/activities",
+      icon: FileText,
+      role: "ROLE_TEACHER",
+    },
+    {
+      name: "Minhas Atividades",
+      href: "/student-activities",
+      icon: FileText,
+      role: "ROLE_STUDENT",
+    },
     {
       name: "Fazer Chamada",
       href: "/attendance-call",

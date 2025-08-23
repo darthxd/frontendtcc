@@ -12,6 +12,9 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
+import StudentActivities from "./pages/StudentActivities";
+import Activities from "./pages/Activities";
 import AttendanceCall from "./pages/AttendanceCall";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
@@ -84,11 +87,22 @@ function AppContent() {
                       case "ROLE_TEACHER":
                         return <TeacherDashboard />;
                       case "ROLE_STUDENT":
-                        return <Dashboard />;
+                        return <StudentDashboard />;
                       default:
                         return <Navigate to="/login" replace />;
                     }
                   })()}
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/activities"
+            element={
+              <ProtectedRoute requiredRole="ROLE_TEACHER">
+                <Layout>
+                  <Activities />
                 </Layout>
               </ProtectedRoute>
             }
@@ -144,6 +158,17 @@ function AppContent() {
               <ProtectedRoute requiredRole="ROLE_ADMIN">
                 <Layout>
                   <Subjects />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student-activities"
+            element={
+              <ProtectedRoute requiredRole="ROLE_STUDENT">
+                <Layout>
+                  <StudentActivities />
                 </Layout>
               </ProtectedRoute>
             }
