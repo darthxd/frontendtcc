@@ -23,20 +23,18 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
       const response = await api.get("/attendance");
       const allAttendances = response.data;
 
-      // Buscar todos os alunos
-      const studentsResponse = await api.get("/student");
-      const allStudents = studentsResponse.data;
+      const students = await api.get("/student");
+      const allStudents = students.data;
 
       const teacherClassIds = teacherClasses.map((cls) => cls.id);
 
       // Filtrar attendances das turmas do professor no mês selecionado
-      const monthStart = new Date(`${selectedMonth}-01`);
+      const monthStart = new Date(`${selectedMonth}-02`);
       const monthEnd = new Date(
         monthStart.getFullYear(),
-        monthStart.getMonth() + 1,
-        0,
+        monthStart.getMonth() + 2,
+        1,
       );
-
       const teacherAttendances = allAttendances.filter((attendance) => {
         const attendanceDate = new Date(attendance.date);
         return (
@@ -45,7 +43,6 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
           attendanceDate <= monthEnd
         );
       });
-
       // Agrupar por data e turma
       const groupedAttendances = teacherAttendances.reduce(
         (acc, attendance) => {
@@ -67,10 +64,10 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
       const completedCallsData = Object.values(groupedAttendances)
         .map((group) => {
           // Contar alunos da turma
-          const classStudents = allStudents.filter((student) =>
-            student.schoolClassIds?.includes(group.schoolClassId),
+          const classStudents = allStudents.map(
+            (student) => student.schoolClassId === group.schoolClassId,
           );
-
+          console.log(classStudents);
           const className =
             teacherClasses.find((cls) => cls.id === group.schoolClassId)
               ?.name || `Turma ${group.schoolClassId}`;
@@ -95,9 +92,14 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
                 : 0,
           };
         })
-        .filter((call) => call.isComplete)
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+        .filter((call) => {
+          return call.isComplete;
+        })
+        .sort((a, b) => {
+          new Date(b.date) - new Date(a.date);
+        });
 
+      console.log(completedCallsData);
       setCompletedCalls(completedCallsData);
     } catch (error) {
       toast.error("Erro ao carregar chamadas finalizadas");
