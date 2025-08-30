@@ -20,6 +20,10 @@ const TeacherDashboard = () => {
   const [teacherData, setTeacherData] = useState(null);
   const [teacherClasses, setTeacherClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [stats, setStats] = useState({
+    students: 0,
+    attendances: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   const { user: currentUser } = useAuth();
@@ -38,6 +42,7 @@ const TeacherDashboard = () => {
 
       if (teacher.schoolClassIds && teacher.schoolClassIds.length > 0) {
         await fetchTeacherClasses(teacher.schoolClassIds);
+        await fetchStats(teacher);
       } else {
         setTeacherClasses([]);
       }
@@ -63,6 +68,30 @@ const TeacherDashboard = () => {
       }
     } catch (error) {
       toast.error("Erro ao carregar turmas");
+      console.error("Erro:", error);
+    }
+  };
+
+  const fetchStats = async (teacher) => {
+    try {
+      const studentsResponse = await api.get("/student");
+      const allStudents = studentsResponse.data;
+      const allStudentsData = allStudents.filter((student) =>
+        teacher.schoolClassIds.includes(student.schoolClass.id),
+      );
+
+      const attendancesResponse = await api.get("/attendance");
+      const allAttendances = attendancesResponse.data;
+      const allAttendancesData = allAttendances.filter(
+        (attendance) => teacher.id === attendance.teacherId,
+      );
+
+      setStats({
+        students: allStudentsData.length,
+        attendances: allAttendancesData.length,
+      });
+    } catch (error) {
+      toast.error("Erro ao carregar alunos");
       console.error("Erro:", error);
     }
   };
@@ -112,14 +141,14 @@ const TeacherDashboard = () => {
         />
         <StatCard
           title="Total de Alunos"
-          value="--"
+          value={stats.students}
           icon={Users}
           color="bg-green-500"
           subtitle="Todas as turmas"
         />
         <StatCard
           title="Chamadas Realizadas"
-          value="--"
+          value={stats.attendances}
           icon={CheckCircle}
           color="bg-emerald-500"
           subtitle="Este mês"

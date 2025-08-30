@@ -67,7 +67,7 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
           const classStudents = allStudents.map(
             (student) => student.schoolClassId === group.schoolClassId,
           );
-          console.log(classStudents);
+          // console.log(classStudents);
           const className =
             teacherClasses.find((cls) => cls.id === group.schoolClassId)
               ?.name || `Turma ${group.schoolClassId}`;
@@ -99,7 +99,7 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
           new Date(b.date) - new Date(a.date);
         });
 
-      console.log(completedCallsData);
+      // console.log(completedCallsData);
       setCompletedCalls(completedCallsData);
     } catch (error) {
       toast.error("Erro ao carregar chamadas finalizadas");

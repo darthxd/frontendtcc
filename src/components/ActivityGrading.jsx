@@ -5,6 +5,7 @@ import {
   Eye,
   Star,
   Calendar,
+  CalendarClock,
   User,
   ExternalLink,
   CheckCircle,
@@ -138,13 +139,7 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(`${dateString}T00:00:00`).toLocaleDateString("pt-BR");
   };
 
   const getSubmissionStatus = (submission) => {
@@ -186,8 +181,8 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
               <p className="text-gray-600 mt-1">{activity?.title}</p>
               <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                 <span className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Prazo:{" "}
+                  <CalendarClock className="h-4 w-4 mr-1" />
+                  Conclusão:{" "}
                   {activity?.deadline ? formatDate(activity.deadline) : "N/A"}
                 </span>
                 <span className="flex items-center">

@@ -4,6 +4,7 @@ import {
   Edit,
   Trash2,
   Calendar,
+  CalendarClock,
   Users,
   FileText,
   Star,
@@ -208,7 +209,7 @@ const Activities = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+    return new Date(`${dateString}T00:00:00`).toLocaleDateString("pt-BR");
   };
 
   const isOverdue = (deadline) => {
@@ -498,11 +499,17 @@ const Activities = () => {
                         {activity.description}
                       </p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm">
                         <div className="flex items-center text-gray-500">
                           <Calendar className="h-4 w-4 mr-2" />
                           <span className={overdue ? "text-red-500" : ""}>
-                            {formatDate(activity.deadline)}
+                            Postagem: {formatDate(activity.creationDate)}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-gray-500">
+                          <CalendarClock className="h-4 w-4 mr-2" />
+                          <span className={overdue ? "text-red-500" : ""}>
+                            Conclusão: {formatDate(activity.deadline)}
                           </span>
                         </div>
                         <div className="flex items-center text-gray-500">

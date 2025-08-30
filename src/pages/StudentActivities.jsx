@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   BookOpen,
-  Calendar,
+  CalendarClock,
   CheckCircle,
   Clock,
   FileText,
@@ -95,13 +95,7 @@ const StudentActivities = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(`${dateString}T00:00:00`).toLocaleDateString("pt-BR");
   };
 
   const isOverdue = (deadline) => {
@@ -374,9 +368,9 @@ const StudentActivities = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2" />
+                          <CalendarClock className="h-4 w-4 mr-2" />
                           <span className={overdue ? "text-red-500" : ""}>
-                            Prazo: {formatDate(activity.deadline)}
+                            Conclusão: {formatDate(activity.deadline)}
                           </span>
                         </div>
                         <div className="flex items-center">
