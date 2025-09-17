@@ -18,7 +18,8 @@ import api from "../services/api";
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [detailedUser, setDetailedUser] = useState();
+  const [detailedUser, setDetailedUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const { user: currentUser, logout, hasRole } = useAuth();
@@ -68,6 +69,48 @@ const Layout = ({ children }) => {
     (item) => !item.role || hasRole(item.role),
   );
 
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      if (hasRole("ROLE_ADMIN")) {
+        const response = await api.get(
+          `/admin/username/${currentUser.username}`,
+        );
+        const data = response.data;
+        setDetailedUser(data);
+      }
+      if (hasRole("ROLE_TEACHER")) {
+        const response = await api.get(
+          `/teacher/username/${currentUser.username}`,
+        );
+        const data = response.data;
+        setDetailedUser(data);
+      }
+      if (hasRole("ROLE_STUDENT")) {
+        const response = await api.get(
+          `/student/username/${currentUser.username}`,
+        );
+        const data = response.data;
+        setDetailedUser(data);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar para desktop */}
@@ -112,7 +155,7 @@ const Layout = ({ children }) => {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {currentUser.username}
+                  {detailedUser.name}
                 </p>
                 <p className="text-xs text-gray-500">
                   {currentUser?.role === "ROLE_ADMIN"
@@ -209,7 +252,7 @@ const Layout = ({ children }) => {
                   </div>
                   <div className="ml-3">
                     <p className="text-base font-medium text-gray-700">
-                      {currentUser.username}
+                      {detailedUser.name}
                     </p>
                     <p className="text-sm text-gray-500">
                       {currentUser?.role === "ROLE_ADMIN"
