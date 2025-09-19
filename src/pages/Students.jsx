@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Edit, Trash2, Search, X } from "lucide-react";
+import { Plus, Edit, Trash2, Search, X, Eye } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
@@ -13,6 +13,8 @@ const Students = () => {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [schoolClasses, setSchoolClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const {
     register,
@@ -124,6 +126,30 @@ const Students = () => {
     });
   };
 
+  const registerBiometry = async (studentId) => {
+    toast
+      .promise(
+        fetch("http://192.168.15.12/api/fingerprint/enroll", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            studentId: studentId,
+          }),
+        }),
+        {
+          loading: "Coloque o dedo no sensor",
+          success: "Biometria cadastrada com sucesso!",
+          error: "Erro ao cadastrar a biometria",
+        },
+      )
+      .catch((error) => {
+        toast.error("Erro ao cadastrar a biometria");
+        console.error("Erro:", error);
+      });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -136,16 +162,12 @@ const Students = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Alunos</h1>
-          <p className="text-gray-600">Gerencie os alunos do sistema</p>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Gerenciar Alunos
+            </h1>
+          </div>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn btn-primary flex items-center"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Cadastrar Aluno
-        </button>
       </div>
 
       {/* Barra de pesquisa */}
@@ -362,22 +384,13 @@ const Students = () => {
                   CPF
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Telefone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Turma
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Série/Ano
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Turno
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data de Nascimento
+                  Na Escola
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
@@ -405,9 +418,6 @@ const Students = () => {
                       : "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.phone
                       ? student.phone.replace(
                           /(\d{2})(\d{5})(\d{4})/,
@@ -419,33 +429,34 @@ const Students = () => {
                     {student.schoolClass ? `${student.schoolClass.name}` : "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.schoolClass.grade === "FIRST_YEAR"
-                      ? "Primeiro ano"
-                      : student.schoolClass.grade === "SECOND_YEAR"
-                        ? "Segundo ano"
-                        : student.schoolClass.grade === "THIRD_YEAR"
-                          ? "Terceiro ano"
-                          : "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.schoolClass.shift === "MORNING"
-                      ? "Manhã"
-                      : student.schoolClass.shift === "AFTERNOON"
-                        ? "Tarde"
-                        : student.schoolClass.shift === "NIGHT"
-                          ? "Noite"
-                          : "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {student.birthdate
-                      ? new Date(student.birthdate).toLocaleDateString(
-                          "pt-BR",
-                          { timeZone: "UTC" },
-                        )
-                      : "-"}
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        student.inschool === null
+                          ? "bg-gray-100 text-gray-800"
+                          : student.inschool
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {student.inschool === null
+                        ? "N/A"
+                        : student.inschool
+                          ? "Sim"
+                          : "Não"}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedStudent(student);
+                          setShowDetailsModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Ver mais"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handleEdit(student)}
                         className="text-primary-600 hover:text-primary-900"
@@ -478,6 +489,219 @@ const Students = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de detalhes do aluno */}
+      {showDetailsModal && selectedStudent && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                Detalhes do Aluno
+              </h3>
+              <button
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setSelectedStudent(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Código
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.id}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome de Usuário
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.username || "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome Completo
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.name}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  RA
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.ra || "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  RM
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.rm}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CPF
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.cpf
+                    ? selectedStudent.cpf.replace(
+                        /(\d{3})(\d{3})(\d{3})(\d{2})/,
+                        "$1.$2.$3-$4",
+                      )
+                    : "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefone
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.phone
+                    ? selectedStudent.phone.replace(
+                        /(\d{2})(\d{5})(\d{4})/,
+                        "($1) $2-$3",
+                      )
+                    : "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.email}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data de Nascimento
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.birthdate
+                    ? new Date(selectedStudent.birthdate).toLocaleDateString(
+                        "pt-BR",
+                        { timeZone: "UTC" },
+                      )
+                    : "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Na Escola
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      selectedStudent.inschool === null
+                        ? "bg-gray-100 text-gray-800"
+                        : selectedStudent.inschool
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {selectedStudent.inschool === null
+                      ? "N/A"
+                      : selectedStudent.inschool
+                        ? "Sim"
+                        : "Não"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {selectedStudent.schoolClass && (
+              <div className="mt-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">
+                  Informações da Turma
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Turma
+                    </label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {selectedStudent.schoolClass.name}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Série/Ano
+                    </label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {selectedStudent.schoolClass.grade === "FIRST_YEAR"
+                        ? "Primeiro ano"
+                        : selectedStudent.schoolClass.grade === "SECOND_YEAR"
+                          ? "Segundo ano"
+                          : selectedStudent.schoolClass.grade === "THIRD_YEAR"
+                            ? "Terceiro ano"
+                            : "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Curso
+                    </label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {selectedStudent.schoolClass.course}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Turno
+                    </label>
+                    <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                      {selectedStudent.schoolClass.shift === "MORNING"
+                        ? "Manhã"
+                        : selectedStudent.schoolClass.shift === "AFTERNOON"
+                          ? "Tarde"
+                          : selectedStudent.schoolClass.shift === "NIGHT"
+                            ? "Noite"
+                            : "-"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-center">
+              <button
+                className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition-colors"
+                onClick={() => {
+                  registerBiometry(selectedStudent.id);
+                }}
+              >
+                {selectedStudent.biometry
+                  ? "Atualizar Biometria"
+                  : "Cadastrar Biometria"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
