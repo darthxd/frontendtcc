@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Plus, Edit, Trash2, Search, X } from "lucide-react";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 import Select from "react-select";
@@ -281,205 +281,203 @@ const Teachers = () => {
         />
       </div>
 
-      {/* Formulário */}
+      {/* Modal/Form */}
       {showForm && (
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
               {editingTeacher ? "Editar Professor" : "Cadastrar Professor"}
             </h3>
-            <button
-              onClick={handleCancel}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Usuário
-                </label>
-                <input
-                  type="text"
-                  {...register("username", {
-                    required: "O usuário é obrigatório",
-                  })}
-                  className="input"
-                  placeholder="Usuário que será usado para entrar na conta"
-                />
-                {errors.username && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.username.message}
-                  </p>
-                )}
-              </div>
-
-              {!editingTeacher ? (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Senha
+                    Usuário
                   </label>
                   <input
                     type="text"
-                    {...register("password", {
-                      required: "A senha é obrigatória",
+                    {...register("username", {
+                      required: "O usuário é obrigatório",
                     })}
-                    className="input"
-                    placeholder="Senha que será usada para entrar na conta"
+                    className="input w-full"
+                    placeholder="Usuário que será usado para entrar na conta"
                   />
-                  {errors.password && (
+                  {errors.username && (
                     <p className="mt-1 text-sm text-red-600">
-                      {errors.password.message}
+                      {errors.username.message}
                     </p>
                   )}
                 </div>
-              ) : null}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome
-                </label>
-                <input
-                  type="text"
-                  {...register("name", { required: "Nome é obrigatório" })}
-                  className="input"
-                  placeholder="Nome completo"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  {...register("email", {
-                    required: "Email é obrigatório",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Email inválido",
-                    },
-                  })}
-                  className="input"
-                  placeholder="email@exemplo.com"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CPF
-                </label>
-                <input
-                  type="text"
-                  {...register("cpf", { required: "O CPF é obrigatório." })}
-                  className="input"
-                  placeholder="111.222.333-44"
-                  maxLength={11}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefone
-                </label>
-                <input
-                  type="text"
-                  {...register("phone")}
-                  className="input"
-                  placeholder="(11) 99999-9999"
-                  maxLength={11}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Disciplinas que leciona
-                </label>
-                <Controller
-                  control={control}
-                  name="subjectIds"
-                  defaultValue={[]}
-                  render={({ field }) => (
-                    <Select
-                      isMulti
-                      isClearable
-                      isLoading={loadingSubjects}
-                      options={subjectOptions}
-                      value={subjectOptions.filter((opt) =>
-                        (field.value || []).includes(opt.value),
-                      )}
-                      onChange={(selected) =>
-                        field.onChange((selected || []).map((opt) => opt.value))
-                      }
-                      classNamePrefix="rs"
-                      placeholder="Selecione as disciplinas..."
-                      noOptionsMessage={() => "Nenhuma disciplina encontrada"}
+                {!editingTeacher ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Senha
+                    </label>
+                    <input
+                      type="text"
+                      {...register("password", {
+                        required: "A senha é obrigatória",
+                      })}
+                      className="input w-full"
+                      placeholder="Senha que será usada para entrar na conta"
                     />
+                    {errors.password && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.password.message}
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    {...register("name", { required: "Nome é obrigatório" })}
+                    className="input w-full"
+                    placeholder="Nome completo"
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.name.message}
+                    </p>
                   )}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Você pode buscar pelo nome e selecionar múltiplas opções.
-                </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    {...register("email", {
+                      required: "Email é obrigatório",
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Email inválido",
+                      },
+                    })}
+                    className="input w-full"
+                    placeholder="email@exemplo.com"
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CPF
+                  </label>
+                  <input
+                    type="text"
+                    {...register("cpf", { required: "O CPF é obrigatório." })}
+                    className="input w-full"
+                    placeholder="111.222.333-44"
+                    maxLength={11}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefone
+                  </label>
+                  <input
+                    type="text"
+                    {...register("phone")}
+                    className="input w-full"
+                    placeholder="(11) 99999-9999"
+                    maxLength={11}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Disciplinas que leciona
+                  </label>
+                  <Controller
+                    control={control}
+                    name="subjectIds"
+                    defaultValue={[]}
+                    render={({ field }) => (
+                      <Select
+                        isMulti
+                        isClearable
+                        isLoading={loadingSubjects}
+                        options={subjectOptions}
+                        value={subjectOptions.filter((opt) =>
+                          (field.value || []).includes(opt.value),
+                        )}
+                        onChange={(selected) =>
+                          field.onChange(
+                            (selected || []).map((opt) => opt.value),
+                          )
+                        }
+                        classNamePrefix="rs"
+                        placeholder="Selecione as disciplinas..."
+                        noOptionsMessage={() => "Nenhuma disciplina encontrada"}
+                      />
+                    )}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Você pode buscar pelo nome e selecionar múltiplas opções.
+                  </p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Turmas que leciona
+                  </label>
+                  <Controller
+                    control={control}
+                    name="schoolClassIds"
+                    defaultValue={[]}
+                    render={({ field }) => (
+                      <Select
+                        isMulti
+                        isClearable
+                        isLoading={loadingSchoolClasses}
+                        options={schoolClassOptions}
+                        value={schoolClassOptions.filter((opt) =>
+                          (field.value || []).includes(opt.value),
+                        )}
+                        onChange={(selected) =>
+                          field.onChange(
+                            (selected || []).map((opt) => opt.value),
+                          )
+                        }
+                        classNamePrefix="rs"
+                        placeholder="Selecione as turmas..."
+                        noOptionsMessage={() => "Nenhuma turma encontrada"}
+                      />
+                    )}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Você pode buscar pelo nome e selecionar múltiplas opções.
+                  </p>
+                </div>
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Turmas que leciona
-                </label>
-                <Controller
-                  control={control}
-                  name="schoolClassIds"
-                  defaultValue={[]}
-                  render={({ field }) => (
-                    <Select
-                      isMulti
-                      isClearable
-                      isLoading={loadingSchoolClasses}
-                      options={schoolClassOptions}
-                      value={schoolClassOptions.filter((opt) =>
-                        (field.value || []).includes(opt.value),
-                      )}
-                      onChange={(selected) =>
-                        field.onChange((selected || []).map((opt) => opt.value))
-                      }
-                      classNamePrefix="rs"
-                      placeholder="Selecione as turmas..."
-                      noOptionsMessage={() => "Nenhuma turma encontrada"}
-                    />
-                  )}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Você pode buscar pelo nome e selecionar múltiplas opções.
-                </p>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="btn btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary flex-1">
+                  {editingTeacher ? "Atualizar" : "Criar"}
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="btn btn-secondary"
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {editingTeacher ? "Atualizar" : "Criar"}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 

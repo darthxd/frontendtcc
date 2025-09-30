@@ -21,6 +21,7 @@ import Teachers from "./pages/Teachers";
 import Classes from "./pages/Classes";
 import Subjects from "./pages/Subjects";
 import Unauthorized from "./pages/Unauthorized";
+import TokenWarning from "./components/TokenWarning";
 
 function AppContent() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -60,6 +61,9 @@ function AppContent() {
             },
           }}
         />
+
+        {/* Componente de aviso de token expirado */}
+        <TokenWarning />
 
         <Routes>
           {/* Rota pública */}

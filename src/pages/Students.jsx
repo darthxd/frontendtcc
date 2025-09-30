@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Edit, Trash2, Search, X, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Search, X, Eye, Fingerprint } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
@@ -15,6 +15,11 @@ const Students = () => {
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [isUpdatingStudent, setIsUpdatingStudent] = useState(false);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(null);
+  const [biometryData, setBiometryData] = useState(null);
 
   const {
     register,
@@ -67,6 +72,53 @@ const Students = () => {
     }
   };
 
+  // Função helper para atualizar um aluno específico na lista
+  const updateStudentInList = async (studentId) => {
+    setIsUpdatingStudent(true);
+    try {
+      const updatedStudentResponse = await api.get(`/student/${studentId}`);
+      const updatedStudent = updatedStudentResponse.data;
+
+      // Atualiza o aluno na lista principal
+      setStudents((prevStudents) =>
+        prevStudents.map((student) =>
+          student.id === studentId ? updatedStudent : student,
+        ),
+      );
+
+      // Se há um aluno selecionado no modal, atualiza também seus dados
+      if (selectedStudent && selectedStudent.id === studentId) {
+        setSelectedStudent(updatedStudent);
+        setLastUpdated(new Date());
+      }
+
+      return updatedStudent;
+    } catch (error) {
+      console.error("Erro ao atualizar dados do aluno:", error);
+      // Em caso de erro na atualização específica, faz refresh completo como fallback
+      await fetchStudents();
+      throw error;
+    } finally {
+      setIsUpdatingStudent(false);
+    }
+  };
+
+  // Cleanup do interval quando component desmonta ou modal fecha
+  useEffect(() => {
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
+  }, [refreshInterval]);
+
+  // Para o auto-refresh quando modal fecha
+  const closeModal = () => {
+    setShowDetailsModal(false);
+    setSelectedStudent(null);
+    setLastUpdated(null);
+  };
+
   const onSubmit = async (data) => {
     try {
       if (editingStudent) {
@@ -89,7 +141,6 @@ const Students = () => {
 
   const handleEdit = (student) => {
     setEditingStudent(student);
-    // Mapeia os dados do aluno para o formulário, incluindo o schoolClassId
     const formData = {
       ...student,
       schoolClassId: student.schoolClass?.id || "",
@@ -127,27 +178,99 @@ const Students = () => {
   };
 
   const registerBiometry = async (studentId) => {
-    toast
-      .promise(
-        fetch("http://192.168.15.12/api/fingerprint/enroll", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            studentId: studentId,
-          }),
+    try {
+      await toast.promise(
+        api.post("/student/biometry/enroll", {
+          studentId: studentId,
         }),
         {
-          loading: "Coloque o dedo no sensor",
+          loading: "Coloque o dedo no sensor...",
           success: "Biometria cadastrada com sucesso!",
-          error: "Erro ao cadastrar a biometria",
+          error: (err) => {
+            // Tratamento de erro mais específico
+            if (err.response?.status === 400) {
+              return "Erro na leitura biométrica. Tente novamente.";
+            } else if (err.response?.status === 409) {
+              return "Biometria já cadastrada para este aluno.";
+            } else if (err.response?.status === 500) {
+              return "Erro interno do servidor. Contate o administrador.";
+            }
+            return "Erro ao cadastrar a biometria. Tente novamente.";
+          },
         },
-      )
-      .catch((error) => {
-        toast.error("Erro ao cadastrar a biometria");
-        console.error("Erro:", error);
+      );
+      try {
+        await updateStudentInList(studentId);
+      } catch (updateError) {
+        toast.error(
+          "Biometria cadastrada, mas os dados podem não estar atualizados. Recarregue a página.",
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao cadastrar biometria:", error);
+      if (error.response) {
+        console.error("Detalhes do erro:", {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers,
+        });
+      }
+    }
+  };
+
+  const deleteBiometry = async (studentId) => {
+    try {
+      await api.post("/student/biometry/delete", {
+        studentId: studentId,
       });
+      toast.success("Biometria do aluno limpa com sucesso.");
+      try {
+        await updateStudentInList(studentId);
+      } catch (updateError) {
+        toast.error(
+          "Biometria limpa, mas os dados podem não estar atualizados. Recarregue a página.",
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao limpar biometria:", error);
+    }
+  };
+
+  const readBiometry = async () => {
+    try {
+      const response = await api.post("/student/biometry/read");
+      const data = response.data;
+      if (response.status !== 200) {
+        throw new Error(`Erro ao ler biometria: ${response.statusText}`);
+      }
+      console.log(data);
+      setSelectedStudent(data);
+      return data;
+    } catch (error) {
+      console.error("Erro ao ler biometria:", error);
+      throw error;
+    }
+  };
+
+  const handleReadBiometry = async () => {
+    try {
+      const studentData = await toast.promise(readBiometry(), {
+        loading: "Coloque o dedo no sensor",
+        success: "Biometria lida com sucesso.",
+        error: "Erro ao ler biometria.",
+      });
+      setShowDetailsModal(true);
+      try {
+        await updateStudentInList(studentData.id);
+      } catch (updateError) {
+        toast.error(
+          "Biometria lida, mas os dados podem não estar atualizados. Recarregue a página.",
+        );
+        console.error("Erro ao atualizar aluno:", updateError);
+      }
+    } catch (error) {
+      console.error("Falha na leitura da biometria:", error);
+    }
   };
 
   if (loading) {
@@ -162,11 +285,26 @@ const Students = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Gerenciar Alunos
-            </h1>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Alunos</h1>
+          <p className="text-gray-600">
+            Gerencie os alunos cadastrados no sistema
+          </p>
+        </div>
+        <div className="flex gap-x-2">
+          <button
+            onClick={() => handleReadBiometry()}
+            className="btn btn-secondary flex items-center"
+          >
+            <Fingerprint className="h-4 w-4 mr-2" />
+            Ler biometria
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn btn-primary flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Cadastrar Aluno
+          </button>
         </div>
       </div>
 
@@ -182,186 +320,180 @@ const Students = () => {
         />
       </div>
 
-      {/* Formulário */}
+      {/* Modal/Form */}
       {showForm && (
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
               {editingStudent ? "Editar Aluno" : "Cadastrar Aluno"}
             </h3>
-            <button
-              onClick={handleCancel}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome
-                </label>
-                <input
-                  type="text"
-                  {...register("name", { required: "Nome é obrigatório" })}
-                  className="input"
-                  placeholder="Nome completo"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.name.message}
-                  </p>
-                )}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    {...register("name", { required: "Nome é obrigatório" })}
+                    className="input w-full"
+                    placeholder="Nome completo"
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.name.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CPF
+                  </label>
+                  <input
+                    type="text"
+                    {...register("cpf", { required: "CPF é obrigatório" })}
+                    className="input w-full"
+                    placeholder="111.222.333-44"
+                    maxLength={11}
+                  />
+                  {errors.cpf && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.cpf.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    RM
+                  </label>
+                  <input
+                    type="text"
+                    {...register("rm", { required: "RM é obrigatório" })}
+                    className="input w-full"
+                    placeholder="RM"
+                    maxLength={5}
+                  />
+                  {errors.rm && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.rm.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    RA
+                  </label>
+                  <input
+                    type="text"
+                    {...register("ra", { required: "RA é obrigatório" })}
+                    className="input w-full"
+                    placeholder="RA"
+                    maxLength={13}
+                  />
+                  {errors.ra && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.ra.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    {...register("email", {
+                      required: "Email é obrigatório",
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Email inválido",
+                      },
+                    })}
+                    className="input w-full"
+                    placeholder="email@exemplo.com"
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefone
+                  </label>
+                  <input
+                    type="text"
+                    {...register("phone")}
+                    className="input w-full"
+                    placeholder="(11) 99999-9999"
+                    maxLength={11}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data de Nascimento
+                  </label>
+                  <input
+                    type="date"
+                    {...register("birthdate")}
+                    className="input w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Turma
+                  </label>
+                  <select
+                    {...register("schoolClassId", {
+                      required: "Turma é obrigatória",
+                    })}
+                    className="input w-full bg-white"
+                    disabled={loadingClasses}
+                    defaultValue=""
+                  >
+                    <option value="">Selecione uma turma</option>
+                    {schoolClasses.map((schoolClass) => (
+                      <option key={schoolClass.id} value={schoolClass.id}>
+                        {schoolClass.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.schoolClassId && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.schoolClassId.message}
+                    </p>
+                  )}
+                  {loadingClasses && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Carregando turmas...
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CPF
-                </label>
-                <input
-                  type="text"
-                  {...register("cpf", { required: "CPF é obrigatório" })}
-                  className="input"
-                  placeholder="111.222.333-44"
-                  maxLength={11}
-                />
-                {errors.cpf && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.cpf.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  RM
-                </label>
-                <input
-                  type="text"
-                  {...register("rm", { required: "RM é obrigatório" })}
-                  className="input"
-                  placeholder="RM"
-                  maxLength={5}
-                />
-                {errors.rm && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.rm.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  RA
-                </label>
-                <input
-                  type="text"
-                  {...register("ra", { required: "RA é obrigatório" })}
-                  className="input"
-                  placeholder="RA"
-                  maxLength={13}
-                />
-                {errors.ra && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.ra.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  {...register("email", {
-                    required: "Email é obrigatório",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Email inválido",
-                    },
-                  })}
-                  className="input"
-                  placeholder="email@exemplo.com"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefone
-                </label>
-                <input
-                  type="text"
-                  {...register("phone")}
-                  className="input"
-                  placeholder="(11) 99999-9999"
-                  maxLength={11}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data de Nascimento
-                </label>
-                <input
-                  type="date"
-                  {...register("birthdate")}
-                  className="input"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Turma
-                </label>
-                <select
-                  {...register("schoolClassId", {
-                    required: "Turma é obrigatória",
-                  })}
-                  className="input bg-white"
-                  disabled={loadingClasses}
-                  defaultValue=""
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="btn btn-secondary flex-1"
                 >
-                  <option value="">Selecione uma turma</option>
-                  {schoolClasses.map((schoolClass) => (
-                    <option key={schoolClass.id} value={schoolClass.id}>
-                      {schoolClass.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.schoolClassId && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.schoolClassId.message}
-                  </p>
-                )}
-                {loadingClasses && (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Carregando turmas...
-                  </p>
-                )}
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary flex-1">
+                  {editingStudent ? "Atualizar" : "Criar"}
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="btn btn-secondary"
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {editingStudent ? "Atualizar" : "Criar"}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 
@@ -390,7 +522,10 @@ const Students = () => {
                   Turma
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Na Escola
+                  Biometria
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
@@ -431,18 +566,25 @@ const Students = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
-                        student.inschool === null
-                          ? "bg-gray-100 text-gray-800"
-                          : student.inschool
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                        student.biometry === true
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {student.inschool === null
-                        ? "N/A"
-                        : student.inschool
-                          ? "Sim"
-                          : "Não"}
+                      {student.biometry === true
+                        ? "Cadastrada"
+                        : "Não cadastrada"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        student.inschool === true
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {student.inschool === true ? "Na escola" : "Ausente"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -499,10 +641,7 @@ const Students = () => {
                 Detalhes do Aluno
               </h3>
               <button
-                onClick={() => {
-                  setShowDetailsModal(false);
-                  setSelectedStudent(null);
-                }}
+                onClick={closeModal}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
@@ -608,23 +747,17 @@ const Students = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Na Escola
+                  Biometria Cadastrada
                 </label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
                   <span
                     className={`px-2 py-1 text-xs rounded-full ${
-                      selectedStudent.inschool === null
-                        ? "bg-gray-100 text-gray-800"
-                        : selectedStudent.inschool
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                      selectedStudent.biometry === true
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {selectedStudent.inschool === null
-                      ? "N/A"
-                      : selectedStudent.inschool
-                        ? "Sim"
-                        : "Não"}
+                    {selectedStudent.biometry === true ? "Sim" : "Não"}
                   </span>
                 </p>
               </div>
@@ -687,17 +820,54 @@ const Students = () => {
               </div>
             )}
 
-            <div className="mt-6 flex justify-center">
-              <button
-                className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition-colors"
-                onClick={() => {
-                  registerBiometry(selectedStudent.id);
-                }}
-              >
-                {selectedStudent.biometry
-                  ? "Atualizar Biometria"
-                  : "Cadastrar Biometria"}
-              </button>
+            {/* Indicador de última atualização */}
+            {lastUpdated && (
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500">
+                  Última atualização: {lastUpdated.toLocaleString("pt-BR")}
+                </p>
+              </div>
+            )}
+
+            <div className="flex w-full gap-x-2 items-center justify-center">
+              {selectedStudent.biometry ? (
+                <div className="mt-6 flex justify-center gap-3">
+                  <button
+                    className={`px-8 py-3 rounded-md transition-colors ${
+                      selectedStudent.biometry
+                        ? "bg-gray-400 hover:bg-gray-600"
+                        : "bg-gray-400 cursor-not-allowed"
+                    } text-white`}
+                    onClick={() => {
+                      if (selectedStudent.biometry) {
+                        deleteBiometry(selectedStudent.id);
+                      }
+                    }}
+                    disabled={isUpdatingStudent}
+                  >
+                    Limpar biometria
+                  </button>
+                </div>
+              ) : null}
+              <div className="mt-6 flex justify-center gap-3">
+                <button
+                  className={`px-8 py-3 rounded-md transition-colors ${
+                    isUpdatingStudent
+                      ? "bg-blue-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  } text-white`}
+                  onClick={() => {
+                    if (!isUpdatingStudent) {
+                      registerBiometry(selectedStudent.id);
+                    }
+                  }}
+                  disabled={isUpdatingStudent}
+                >
+                  {selectedStudent.biometry
+                    ? "Atualizar Biometria"
+                    : "Cadastrar Biometria"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

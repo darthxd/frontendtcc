@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Edit, Trash2, Search, X } from "lucide-react";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
@@ -127,23 +127,15 @@ const Subjects = () => {
         />
       </div>
 
-      {/* Formulário */}
+      {/* Modal/Form */}
       {showForm && (
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
               {editingSubject ? "Editar Disciplina" : "Cadastrar Disciplina"}
             </h3>
-            <button
-              onClick={handleCancel}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome da Disciplina
@@ -151,7 +143,7 @@ const Subjects = () => {
                 <input
                   type="text"
                   {...register("name", { required: "Nome é obrigatório" })}
-                  className="input"
+                  className="input w-full"
                   placeholder="Ex: Matemática"
                 />
                 {errors.name && (
@@ -168,26 +160,26 @@ const Subjects = () => {
                 <input
                   type="number"
                   {...register("workload")}
-                  className="input"
+                  className="input w-full"
                   placeholder="Ex: 80"
                   min="1"
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="btn btn-secondary"
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {editingSubject ? "Atualizar" : "Criar"}
-              </button>
-            </div>
-          </form>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="btn btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary flex-1">
+                  {editingSubject ? "Atualizar" : "Criar"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

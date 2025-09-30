@@ -22,6 +22,7 @@ const AttendanceCall = () => {
     new Date().toISOString().split("T")[0],
   );
   const [students, setStudents] = useState([]);
+  const [presenceStatus, setPresenceStatus] = useState([]);
   const [attendanceData, setAttendanceData] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -29,7 +30,6 @@ const AttendanceCall = () => {
   const [existingAttendances, setExistingAttendances] = useState([]);
   const [isCallLocked, setIsCallLocked] = useState(false);
   const [lockMessage, setLockMessage] = useState("");
-
   const currentUser = authService.getCurrentUser();
 
   useEffect(() => {
@@ -40,6 +40,7 @@ const AttendanceCall = () => {
     if (selectedClass && selectedDate) {
       fetchClassStudents();
       fetchExistingAttendances();
+      fetchPresenceStatus();
     }
   }, [selectedClass, selectedDate]);
 
@@ -87,10 +88,10 @@ const AttendanceCall = () => {
       const classStudents = response.data;
       setStudents(classStudents);
 
-      // Inicializar attendance data com false para todos os alunos
+      // Inicializar attendance data com true (presente) para todos os alunos
       const initialAttendanceData = {};
       classStudents.forEach((student) => {
-        initialAttendanceData[student.id] = false;
+        initialAttendanceData[student.id] = true;
       });
       setAttendanceData(initialAttendanceData);
     } catch (error) {
@@ -137,7 +138,43 @@ const AttendanceCall = () => {
     }
   };
 
-  const handleAttendanceChange = (studentId, isPresent) => {
+  const fetchPresenceStatus = async () => {
+    try {
+      const response = await api.get(`/presencelog/date/${selectedDate}`);
+      const data = response.data;
+      setPresenceStatus(data);
+      console.log(presenceStatus);
+    } catch (error) {
+      console.error("Erro ao carregar status de presença:", error);
+    }
+  };
+
+  const getStudentEntryTime = (studentId) => {
+    const presenceRecord = presenceStatus.find(
+      (status) => status.studentId === studentId,
+    );
+    return presenceRecord ? presenceRecord.entryTime : null;
+  };
+
+  const formatEntryTime = (entryTime) => {
+    if (!entryTime) return null;
+    try {
+      // Se entryTime já está no formato HH:MM, retorna diretamente
+      if (typeof entryTime === "string" && entryTime.match(/^\d{2}:\d{2}/)) {
+        return entryTime.substring(0, 5);
+      }
+      // Se for um timestamp completo, formata para HH:MM
+      const time = new Date(entryTime);
+      return time.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const handleAttendanceChange = (studentId, isAbsent) => {
     if (isCallLocked) {
       toast.error("Esta chamada já foi finalizada e não pode ser alterada");
       return;
@@ -145,7 +182,7 @@ const AttendanceCall = () => {
 
     setAttendanceData((prev) => ({
       ...prev,
-      [studentId]: isPresent,
+      [studentId]: !isAbsent, // Se checkbox marcada (ausente), valor = false; se desmarcada (presente), valor = true
     }));
   };
 
@@ -182,7 +219,7 @@ const AttendanceCall = () => {
         teacherId: teacherData.id,
         presences: students.map((student) => ({
           studentId: student.id,
-          present: attendanceData[student.id] || false,
+          present: attendanceData[student.id] ?? true,
         })),
       };
 
@@ -368,14 +405,14 @@ const AttendanceCall = () => {
                   className="btn btn-secondary text-sm flex items-center"
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
-                  Todos Presentes
+                  Desmarcar Todos (Presentes)
                 </button>
                 <button
                   onClick={() => handleSelectAll(false)}
                   className="btn btn-secondary text-sm flex items-center"
                 >
                   <XCircle className="h-4 w-4 mr-1" />
-                  Todos Ausentes
+                  Marcar Todos (Ausentes)
                 </button>
               </div>
             )}
@@ -409,7 +446,25 @@ const AttendanceCall = () => {
                           {student.name}
                         </p>
                         <p className="text-sm text-gray-500">
-                          ID: {student.id} • {student.email}
+                          RM: {student.rm} •
+                          {student.inschool ? (
+                            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 ml-1 rounded-full">
+                              Na escola
+                              {student.inschool &&
+                                getStudentEntryTime(student.id) && (
+                                  <span className="text-sm text-gray-600 ml-2">
+                                    • Entrou às{" "}
+                                    {formatEntryTime(
+                                      getStudentEntryTime(student.id),
+                                    )}
+                                  </span>
+                                )}
+                            </span>
+                          ) : (
+                            <span className="text-sm bg-red-100 text-red-800 px-2 py-1 ml-1 rounded-full">
+                              Ausente
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -420,7 +475,7 @@ const AttendanceCall = () => {
                       >
                         <input
                           type="checkbox"
-                          checked={attendanceData[student.id] || false}
+                          checked={!attendanceData[student.id]}
                           onChange={(e) =>
                             handleAttendanceChange(student.id, e.target.checked)
                           }
@@ -429,25 +484,25 @@ const AttendanceCall = () => {
                         />
                         <div
                           className={`relative w-6 h-6 rounded-md border-2 transition-colors ${
-                            attendanceData[student.id]
-                              ? "bg-green-500 border-green-500"
+                            !attendanceData[student.id]
+                              ? "bg-red-500 border-red-500"
                               : isCallLocked
                                 ? "bg-gray-200 border-gray-300"
-                                : "bg-white border-gray-300 hover:border-green-400"
+                                : "bg-white border-gray-300 hover:border-red-400"
                           }`}
                         >
-                          {attendanceData[student.id] && (
-                            <CheckCircle className="h-4 w-4 text-white absolute top-0.5 left-0.5" />
+                          {!attendanceData[student.id] && (
+                            <XCircle className="h-4 w-4 text-white absolute top-0.5 left-0.5" />
                           )}
                         </div>
                         <span
                           className={`ml-2 text-sm font-medium ${isCallLocked ? "text-gray-500" : "text-gray-700"}`}
                         >
                           {isCallLocked
-                            ? attendanceData[student.id]
-                              ? "Presente"
-                              : "Ausente"
-                            : "Presente"}
+                            ? !attendanceData[student.id]
+                              ? "Ausente"
+                              : "Presente"
+                            : "Ausente"}
                         </span>
                       </label>
                     </div>
