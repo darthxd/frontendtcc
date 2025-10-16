@@ -166,7 +166,6 @@ const StudentDashboard = () => {
           value={stats.total}
           icon={BookOpen}
           color="bg-blue-500"
-          onClick={() => (window.location.href = "/student-activities")}
         />
         <StatCard
           title="Atividades Enviadas"
