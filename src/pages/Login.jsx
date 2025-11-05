@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Building2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { schoolUnitService } from "../services/schoolUnitService";
 import toast from "react-hot-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [schoolUnits, setSchoolUnits] = useState([]);
+  const [loadingUnits, setLoadingUnits] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -20,10 +23,28 @@ const Login = () => {
 
   const from = location.state?.from?.pathname || "/dashboard";
 
+  // Buscar unidades escolares ao carregar o componente
+  useEffect(() => {
+    const fetchSchoolUnits = async () => {
+      try {
+        setLoadingUnits(true);
+        const units = await schoolUnitService.getAllSchoolUnits();
+        setSchoolUnits(units);
+      } catch (error) {
+        console.error("Erro ao carregar unidades escolares:", error);
+        toast.error("Erro ao carregar unidades escolares");
+      } finally {
+        setLoadingUnits(false);
+      }
+    };
+
+    fetchSchoolUnits();
+  }, []);
+
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await login(data.username, data.password);
+      await login(data.username, data.password, data.unitId);
       toast.success("Login realizado com sucesso!");
       navigate(from, { replace: true });
     } catch (error) {
@@ -50,6 +71,46 @@ const Login = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
+            {/* Campo de Unidade Escolar */}
+            <div>
+              <label
+                htmlFor="unitId"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Unidade Escolar
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Building2 className="h-5 w-5 text-gray-400" />
+                </div>
+                <select
+                  id="unitId"
+                  {...register("unitId", {
+                    required: "Selecione uma unidade escolar",
+                  })}
+                  className="input pl-10"
+                  disabled={loadingUnits}
+                >
+                  <option value="">
+                    {loadingUnits
+                      ? "Carregando unidades..."
+                      : "Selecione uma unidade"}
+                  </option>
+                  {schoolUnits.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.unitId && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.unitId.message}
+                </p>
+              )}
+            </div>
+
+            {/* Campo de Usuário */}
             <div>
               <label
                 htmlFor="username"
@@ -78,6 +139,7 @@ const Login = () => {
               )}
             </div>
 
+            {/* Campo de Senha */}
             <div>
               <label
                 htmlFor="password"
@@ -119,7 +181,7 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || loadingUnits}
               className="btn btn-primary w-full flex justify-center items-center"
             >
               {isLoading ? (

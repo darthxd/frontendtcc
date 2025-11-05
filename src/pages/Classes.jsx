@@ -27,7 +27,7 @@ const Classes = () => {
     const filtered = classes.filter(
       (cls) =>
         cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cls.grade?.toLowerCase().includes(searchTerm.toLowerCase()),
+        cls.year?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredClasses(filtered);
   }, [searchTerm, classes]);
@@ -138,10 +138,7 @@ const Classes = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Série/Ano
                 </label>
-                <select
-                  {...register("grade")}
-                  className="input w-full bg-white"
-                >
+                <select {...register("year")} className="input w-full bg-white">
                   <option value="">Selecione a série/ano</option>
                   <option value="FIRST_YEAR">Primeiro ano</option>
                   <option value="SECOND_YEAR">Segundo ano</option>
@@ -187,6 +184,20 @@ const Classes = () => {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Capacidade (de alunos)
+                </label>
+              </div>
+              <div>
+                <input
+                  type="number"
+                  {...register("studentsLimit", { required: true })}
+                  name="studentsLimit"
+                  className="input w-full bg-white"
+                />
+              </div>
+
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
@@ -226,6 +237,12 @@ const Classes = () => {
                   Curso
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Capacidade (alunos)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Quantidade de alunos
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -240,11 +257,11 @@ const Classes = () => {
                     {cls.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cls.grade === "FIRST_YEAR"
+                    {cls.year === "FIRST_YEAR"
                       ? "Primeiro ano"
-                      : cls.grade === "SECOND_YEAR"
+                      : cls.year === "SECOND_YEAR"
                         ? "Segundo ano"
-                        : cls.grade === "THIRD_YEAR"
+                        : cls.year === "THIRD_YEAR"
                           ? "Terceiro ano"
                           : "-"}
                   </td>
@@ -259,6 +276,12 @@ const Classes = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {cls.course || "-"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {cls.studentsLimit}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {cls.studentsCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">

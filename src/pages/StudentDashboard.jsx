@@ -13,6 +13,20 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { activityService } from "../services/activityService";
+import { Loading, StatCard, Card } from "../components/ui";
+import {
+  formatCPF,
+  formatPhone,
+  formatPercentage,
+  formatGrade,
+} from "../utils/formatters";
+import {
+  calculateActivityStats,
+  calculateAttendanceStats,
+  getStudentAlerts,
+  getStudentAchievements,
+  getStudentGoals,
+} from "../utils/dashboardUtils";
 import toast from "react-hot-toast";
 import api from "../services/api";
 
@@ -75,78 +89,14 @@ const StudentDashboard = () => {
     }
   };
 
-  const calculateStats = () => {
-    const total = activities.length;
-    const submitted = submissions.length;
-    const graded = submissions.filter((s) => s.grade !== null).length;
-    const pending = total - submitted;
-    const averageGrade =
-      graded > 0
-        ? submissions
-            .filter((s) => s.grade !== null)
-            .reduce((acc, s) => acc + s.grade, 0) / graded
-        : 0;
-
-    return { total, submitted, graded, pending, averageGrade };
-  };
-
-  const calculateAttendanceStats = () => {
-    if (attendance.length === 0) {
-      return { totalClasses: 0, attendedClasses: 0, attendanceRate: 0 };
-    }
-    console.log(attendance);
-    const totalClasses = attendance.length;
-    const attendedClasses = attendance.filter(
-      (record) => record.present,
-    ).length;
-    const attendanceRate = (attendedClasses / totalClasses) * 100;
-
-    return { totalClasses, attendedClasses, attendanceRate };
-  };
-
-  const getPerformanceLevel = (average) => {
-    if (average >= 9) return { level: "Excelente", color: "text-green-600" };
-    if (average >= 7) return { level: "Bom", color: "text-blue-600" };
-    if (average >= 5) return { level: "Regular", color: "text-yellow-600" };
-    return { level: "Precisa Melhorar", color: "text-red-600" };
-  };
-
-  const getAttendanceLevel = (rate) => {
-    if (rate >= 90) return { level: "Excelente", color: "text-green-600" };
-    if (rate >= 80) return { level: "Boa", color: "text-blue-600" };
-    if (rate >= 70) return { level: "Regular", color: "text-yellow-600" };
-    return { level: "Crítica", color: "text-red-600" };
-  };
-
-  const stats = calculateStats();
-  const attendanceStats = calculateAttendanceStats();
-  const performanceLevel = getPerformanceLevel(stats.averageGrade);
-  const attendanceLevel = getAttendanceLevel(attendanceStats.attendanceRate);
-
-  const StatCard = ({ title, value, icon: Icon, color, subtitle, onClick }) => (
-    <div
-      className={`card ${onClick ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
-      onClick={onClick}
-    >
-      <div className="flex items-center">
-        <div className={`flex-shrink-0 p-3 rounded-lg ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
-        </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
-        </div>
-      </div>
-    </div>
-  );
+  const stats = calculateActivityStats(activities, submissions);
+  const attendanceStats = calculateAttendanceStats(attendance);
+  const alerts = getStudentAlerts(stats, attendanceStats);
+  const achievements = getStudentAchievements(stats, attendanceStats);
+  const goals = getStudentGoals(stats, attendanceStats);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading text="Carregando dados do estudante..." size="lg" />;
   }
 
   return (
@@ -176,14 +126,14 @@ const StudentDashboard = () => {
         />
         <StatCard
           title="Média das Notas"
-          value={stats.averageGrade.toFixed(1)}
+          value={formatGrade(stats.averageGrade)}
           icon={TrendingUp}
           color="bg-purple-500"
-          subtitle={performanceLevel.level}
+          subtitle={stats.performanceLevel.level}
         />
         <StatCard
           title="Frequência"
-          value={`${attendanceStats.attendanceRate.toFixed(1)}%`}
+          value={formatPercentage(attendanceStats.attendanceRate)}
           icon={Calendar}
           color="bg-indigo-500"
           subtitle={`${attendanceStats.attendedClasses}/${attendanceStats.totalClasses} presenças`}
@@ -193,7 +143,7 @@ const StudentDashboard = () => {
       {/* Cards de Informações Detalhadas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Informações do Aluno */}
-        <div className="card">
+        <Card>
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <User className="h-5 w-5 mr-2" />
             Minhas Informações
@@ -213,24 +163,12 @@ const StudentDashboard = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">CPF:</span>
-              <span className="font-medium">
-                {studentData?.cpf
-                  ? studentData.cpf.replace(
-                      /(\d{3})(\d{3})(\d{3})(\d{2})/,
-                      "$1.$2.$3-$4",
-                    )
-                  : "Não informado"}
-              </span>
+              <span className="font-medium">{formatCPF(studentData?.cpf)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Telefone:</span>
               <span className="font-medium">
-                {studentData?.phone
-                  ? studentData.phone.replace(
-                      /(\d{2})(\d{5})(\d{4})/,
-                      "($1) $2-$3",
-                    )
-                  : "Não informado"}
+                {formatPhone(studentData?.phone)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -242,10 +180,10 @@ const StudentDashboard = () => {
               </span>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Desempenho Acadêmico */}
-        <div className="card">
+        <Card>
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <GraduationCap className="h-5 w-5 mr-2" />
             Desempenho Acadêmico
@@ -260,10 +198,7 @@ const StudentDashboard = () => {
             <div className="flex justify-between">
               <span className="text-gray-600">Taxa de Conclusão:</span>
               <span className="font-medium">
-                {stats.total > 0
-                  ? ((stats.submitted / stats.total) * 100).toFixed(1)
-                  : 0}
-                %
+                {formatPercentage(stats.completionRate)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -272,8 +207,9 @@ const StudentDashboard = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Média Geral:</span>
-              <span className={`font-medium ${performanceLevel.color}`}>
-                {stats.averageGrade.toFixed(1)} - {performanceLevel.level}
+              <span className={`font-medium ${stats.performanceLevel.color}`}>
+                {formatGrade(stats.averageGrade)} -{" "}
+                {stats.performanceLevel.level}
               </span>
             </div>
             <div className="flex justify-between">
@@ -285,11 +221,11 @@ const StudentDashboard = () => {
               </span>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Análise de Frequência */}
-      <div className="card">
+      <Card>
         <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
           <Calendar className="h-5 w-5 mr-2" />
           Análise de Frequência
@@ -317,11 +253,13 @@ const StudentDashboard = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-3">
               <BarChart3 className="h-8 w-8 text-purple-600" />
             </div>
-            <p className={`text-2xl font-semibold ${attendanceLevel.color}`}>
-              {attendanceStats.attendanceRate.toFixed(1)}%
+            <p
+              className={`text-2xl font-semibold ${attendanceStats.attendanceLevel.color}`}
+            >
+              {formatPercentage(attendanceStats.attendanceRate)}
             </p>
             <p className="text-sm text-gray-500">
-              Taxa - {attendanceLevel.level}
+              Taxa - {attendanceStats.attendanceLevel.level}
             </p>
           </div>
         </div>
@@ -338,41 +276,47 @@ const StudentDashboard = () => {
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Conquistas e Metas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
+        <Card>
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <Award className="h-5 w-5 mr-2" />
             Conquistas
           </h3>
           <div className="space-y-3">
-            {stats.averageGrade >= 9 && (
-              <div className="flex items-center p-2 bg-green-50 rounded-md">
-                <Award className="h-5 w-5 text-green-600 mr-2" />
-                <span className="text-sm text-green-800">
-                  Excelência Acadêmica - Média acima de 9.0
-                </span>
-              </div>
-            )}
-            {attendanceStats.attendanceRate >= 95 && (
-              <div className="flex items-center p-2 bg-blue-50 rounded-md">
-                <Calendar className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="text-sm text-blue-800">
-                  Frequência Exemplar - Mais de 95% de presença
-                </span>
-              </div>
-            )}
-            {stats.submitted === stats.total && stats.total > 0 && (
-              <div className="flex items-center p-2 bg-purple-50 rounded-md">
-                <CheckCircle className="h-5 w-5 text-purple-600 mr-2" />
-                <span className="text-sm text-purple-800">
-                  100% das Atividades Enviadas
-                </span>
-              </div>
-            )}
-            {stats.averageGrade < 7 && attendanceStats.attendanceRate < 75 && (
+            {achievements.length > 0 ? (
+              achievements.map((achievement) => {
+                const IconComponent =
+                  achievement.icon === "Award"
+                    ? Award
+                    : achievement.icon === "Calendar"
+                      ? Calendar
+                      : achievement.icon === "CheckCircle"
+                        ? CheckCircle
+                        : achievement.icon === "TrendingUp"
+                          ? TrendingUp
+                          : Award;
+
+                return (
+                  <div
+                    key={achievement.id}
+                    className={`flex items-center p-2 rounded-md ${achievement.color}`}
+                  >
+                    <IconComponent className="h-5 w-5 mr-2" />
+                    <div>
+                      <span className="text-sm font-medium">
+                        {achievement.title}
+                      </span>
+                      <p className="text-xs opacity-75">
+                        {achievement.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
               <div className="text-center py-4">
                 <p className="text-sm text-gray-500">
                   Continue se dedicando para conquistar suas primeiras medalhas!
@@ -380,41 +324,24 @@ const StudentDashboard = () => {
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
-        <div className="card">
+        <Card>
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <TrendingUp className="h-5 w-5 mr-2" />
             Próximas Metas
           </h3>
           <div className="space-y-3">
-            {stats.pending > 0 && (
-              <div className="p-3 border border-yellow-200 bg-yellow-50 rounded-md">
-                <p className="text-sm font-medium text-yellow-800">
-                  Completar {stats.pending} atividade
-                  {stats.pending > 1 ? "s" : ""} pendente
-                  {stats.pending > 1 ? "s" : ""}
-                </p>
+            {goals.map((goal) => (
+              <div
+                key={goal.id}
+                className={`p-3 border rounded-md ${goal.color}`}
+              >
+                <p className="text-sm font-medium">{goal.title}</p>
               </div>
-            )}
-            {attendanceStats.attendanceRate < 90 && (
-              <div className="p-3 border border-blue-200 bg-blue-50 rounded-md">
-                <p className="text-sm font-medium text-blue-800">
-                  Melhorar frequência para{" "}
-                  {(90 - attendanceStats.attendanceRate).toFixed(1)}% a mais
-                </p>
-              </div>
-            )}
-            {stats.averageGrade < 8 && stats.graded > 0 && (
-              <div className="p-3 border border-green-200 bg-green-50 rounded-md">
-                <p className="text-sm font-medium text-green-800">
-                  Elevar média para {(8 - stats.averageGrade).toFixed(1)} pontos
-                  a mais
-                </p>
-              </div>
-            )}
+            ))}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

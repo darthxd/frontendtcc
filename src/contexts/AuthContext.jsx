@@ -59,9 +59,13 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (username, password, unitId) => {
     try {
-      const { token, user } = await authService.login(username, password);
+      const { token, user } = await authService.login(
+        username,
+        password,
+        unitId,
+      );
       setIsAuthenticated(true);
       setUser(user);
       return { token, user };
@@ -84,7 +88,13 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     logout,
-    hasRole: (role) => user && user.role === role,
+    hasRole: (role) => {
+      if (!user) return false;
+      if (Array.isArray(role)) {
+        return role.includes(user.role);
+      }
+      return user.role === role;
+    },
     isAdmin: () => user && user.role === "ROLE_ADMIN",
     isTeacher: () => user && user.role === "ROLE_TEACHER",
     isStudent: () => user && user.role === "ROLE_STUDENT",

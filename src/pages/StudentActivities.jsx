@@ -11,12 +11,21 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { activityService } from "../services/activityService";
+import { Loading, Card, EmptyState, StatusBadge } from "../components/ui";
+import {
+  formatDate,
+  formatGrade,
+  getStatusConfig,
+  isPastDate,
+} from "../utils/formatters";
+import api from "../services/api";
 import toast from "react-hot-toast";
 
 const StudentActivities = () => {
   const [studentData, setStudentData] = useState(null);
   const [activities, setActivities] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [showSubmissionForm, setShowSubmissionForm] = useState(false);
@@ -61,42 +70,37 @@ const StudentActivities = () => {
     }
   };
 
-  const handleSubmitActivity = async (e) => {
-    e.preventDefault();
-
-    if (!submissionData.answerText.trim()) {
-      toast.error("A resposta é obrigatória");
-      return;
-    }
-
+  const handleSubmitActivity = async (data) => {
     try {
-      const data = {
-        studentId: studentData.id,
-        answerText: submissionData.answerText,
-        fileUrl: submissionData.fileUrl || null,
-      };
+      setLoading(true);
 
-      await activityService.submitActivity(selectedActivity.id, data);
+      const formData = new FormData();
+      formData.append("studentId", studentData.id);
+      formData.append("answerText", data.answerText);
+
+      if (file) {
+        formData.append("file", file);
+      }
+
+      if (!submissionData.answerText.trim()) {
+        toast.error("A resposta é obrigatória");
+        return;
+      }
+
+      await api.post(`/activity/submission/${selectedActivity.id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       toast.success("Atividade enviada com sucesso!");
-
-      setShowSubmissionForm(false);
-      setSelectedActivity(null);
-      setSubmissionData({ answerText: "", fileUrl: "" });
-
-      // Recarregar submissões
-      const updatedSubmissions = await activityService.listSubmissionsByStudent(
-        studentData.id,
-      );
-      setSubmissions(updatedSubmissions);
     } catch (error) {
       toast.error("Erro ao enviar atividade");
       console.error("Erro:", error);
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(`${dateString}T00:00:00`).toLocaleDateString("pt-BR");
-  };
+  // Formatação de data movida para utils/formatters.js
 
   const isOverdue = (deadline) => {
     return new Date(deadline) < new Date();
@@ -171,11 +175,7 @@ const StudentActivities = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <Loading text="Carregando suas atividades..." size="lg" />;
   }
 
   return (
@@ -246,40 +246,12 @@ const StudentActivities = () => {
                   Resposta *
                 </label>
                 <textarea
-                  value={submissionData.answerText}
-                  onChange={(e) =>
-                    setSubmissionData({
-                      ...submissionData,
-                      answerText: e.target.value,
-                    })
-                  }
+                  {...register("answerText", { required: true })}
                   rows={6}
                   className="input w-full"
                   placeholder="Digite sua resposta aqui..."
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL do Arquivo (opcional)
-                </label>
-                <input
-                  type="url"
-                  value={submissionData.fileUrl}
-                  onChange={(e) =>
-                    setSubmissionData({
-                      ...submissionData,
-                      fileUrl: e.target.value,
-                    })
-                  }
-                  className="input w-full"
-                  placeholder="https://exemplo.com/arquivo.pdf"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Cole o link de um arquivo hospedado (Google Drive, Dropbox,
-                  etc.)
-                </p>
               </div>
 
               <div className="flex space-x-3 pt-4">

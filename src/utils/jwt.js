@@ -11,7 +11,7 @@ export const decodeJWT = (token) => {
   try {
     if (!token) return null;
 
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) return null;
 
     const payload = parts[1];
@@ -19,7 +19,7 @@ export const decodeJWT = (token) => {
 
     return decodedPayload;
   } catch (error) {
-    console.error('Erro ao decodificar JWT:', error);
+    console.error("Erro ao decodificar JWT:", error);
     return null;
   }
 };
@@ -39,7 +39,7 @@ export const isTokenExpired = (token) => {
 
     return payload.exp < currentTime;
   } catch (error) {
-    console.error('Erro ao verificar expiração do token:', error);
+    console.error("Erro ao verificar expiração do token:", error);
     return true;
   }
 };
@@ -59,7 +59,7 @@ export const getTokenExpirationTime = (token) => {
 
     return Math.max(0, timeRemaining);
   } catch (error) {
-    console.error('Erro ao obter tempo de expiração:', error);
+    console.error("Erro ao obter tempo de expiração:", error);
     return 0;
   }
 };
@@ -77,7 +77,7 @@ export const isTokenExpiringSoon = (token, minutesThreshold = 5) => {
 
     return timeRemaining > 0 && timeRemaining <= thresholdInSeconds;
   } catch (error) {
-    console.error('Erro ao verificar proximidade da expiração:', error);
+    console.error("Erro ao verificar proximidade da expiração:", error);
     return false;
   }
 };
@@ -91,7 +91,7 @@ export const formatTokenExpirationTime = (token) => {
   try {
     const timeRemaining = getTokenExpirationTime(token);
 
-    if (timeRemaining <= 0) return 'Expirado';
+    if (timeRemaining <= 0) return "Expirado";
 
     const hours = Math.floor(timeRemaining / 3600);
     const minutes = Math.floor((timeRemaining % 3600) / 60);
@@ -105,7 +105,61 @@ export const formatTokenExpirationTime = (token) => {
       return `${seconds}s`;
     }
   } catch (error) {
-    console.error('Erro ao formatar tempo de expiração:', error);
-    return 'Erro';
+    console.error("Erro ao formatar tempo de expiração:", error);
+    return "Erro";
+  }
+};
+
+/**
+ * Obtém o unitId do token JWT
+ * @param {string} token - O token JWT (opcional, busca do localStorage se não fornecido)
+ * @returns {number|null} - O unitId ou null se não encontrado
+ */
+export const getUnitIdFromToken = (token = null) => {
+  try {
+    // Se token não foi fornecido, buscar do localStorage
+    if (!token) {
+      token = localStorage.getItem("token");
+    }
+
+    if (!token) return null;
+
+    const payload = decodeJWT(token);
+    if (!payload || !payload.unitId) return null;
+
+    return payload.unitId;
+  } catch (error) {
+    console.error("Erro ao obter unitId do token:", error);
+    return null;
+  }
+};
+
+/**
+ * Obtém todas as informações do usuário do token JWT
+ * @param {string} token - O token JWT (opcional, busca do localStorage se não fornecido)
+ * @returns {object|null} - Objeto com as informações do usuário ou null
+ */
+export const getUserInfoFromToken = (token = null) => {
+  try {
+    // Se token não foi fornecido, buscar do localStorage
+    if (!token) {
+      token = localStorage.getItem("token");
+    }
+
+    if (!token) return null;
+
+    const payload = decodeJWT(token);
+    if (!payload) return null;
+
+    return {
+      username: payload.sub,
+      role: payload.role,
+      unitId: payload.unitId,
+      exp: payload.exp,
+      iss: payload.iss,
+    };
+  } catch (error) {
+    console.error("Erro ao obter informações do usuário do token:", error);
+    return null;
   }
 };

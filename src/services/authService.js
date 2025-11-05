@@ -22,10 +22,14 @@ export const authService = {
   notifyAuthChange() {
     authListeners.forEach((callback) => callback());
   },
-  async login(username, password) {
+  async login(username, password, unitId) {
     try {
-      const response = await api.post("/auth/login", { username, password });
-      const token = response.data;
+      const response = await api.post("/auth/login", {
+        username,
+        password,
+        unitId: parseInt(unitId),
+      });
+      const token = response.data.token;
 
       // Decodificar o JWT para obter informações do usuário
       const payload = JSON.parse(atob(token.split(".")[1]));
@@ -96,6 +100,14 @@ export const authService = {
 
   isStudent() {
     return this.hasRole("ROLE_STUDENT");
+  },
+
+  isCoordinator() {
+    return this.hasRole("ROLE_COORDINATOR");
+  },
+
+  isSecretary() {
+    return this.hasRole("ROLE_SECRETARY");
   },
 
   /**

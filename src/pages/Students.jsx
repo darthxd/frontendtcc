@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Plus, Edit, Trash2, Search, X, Eye, Fingerprint } from "lucide-react";
 import api from "../services/api";
+import { studentService } from "../services/studentService";
+import { schoolUnitService } from "../services/schoolUnitService";
 import toast from "react-hot-toast";
 
 const Students = () => {
@@ -13,6 +15,8 @@ const Students = () => {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [schoolClasses, setSchoolClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
+  const [schoolUnits, setSchoolUnits] = useState([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -36,6 +40,7 @@ const Students = () => {
   useEffect(() => {
     fetchStudents();
     fetchSchoolClasses();
+    fetchSchoolUnits();
   }, []);
 
   useEffect(() => {
@@ -69,6 +74,19 @@ const Students = () => {
       console.error("Erro ao carregar turmas:", error);
     } finally {
       setLoadingClasses(false);
+    }
+  };
+
+  const fetchSchoolUnits = async () => {
+    try {
+      setLoadingUnits(true);
+      const units = await schoolUnitService.getAllSchoolUnits();
+      setSchoolUnits(units);
+    } catch (error) {
+      toast.error("Erro ao carregar unidades escolares");
+      console.error("Erro:", error);
+    } finally {
+      setLoadingUnits(false);
     }
   };
 
@@ -122,10 +140,10 @@ const Students = () => {
   const onSubmit = async (data) => {
     try {
       if (editingStudent) {
-        await api.put(`/student/${editingStudent.id}`, data);
+        await studentService.updateStudent(editingStudent.id, data);
         toast.success("Aluno atualizado com sucesso!");
       } else {
-        await api.post("/student", data);
+        await studentService.createStudent(data);
         toast.success("Aluno criado com sucesso!");
       }
 
@@ -134,7 +152,7 @@ const Students = () => {
       reset();
       fetchStudents();
     } catch (error) {
-      toast.error("Erro ao salvar aluno");
+      toast.error(error.message || "Erro ao salvar aluno");
       console.error("Erro:", error);
     }
   };
@@ -144,6 +162,7 @@ const Students = () => {
     const formData = {
       ...student,
       schoolClassId: student.schoolClass?.id || "",
+      unitId: student.unitId || "",
     };
     reset(formData);
     setShowForm(true);
@@ -174,6 +193,7 @@ const Students = () => {
       phone: "",
       birthdate: "",
       schoolClassId: "",
+      unitId: "",
     });
   };
 
@@ -291,13 +311,15 @@ const Students = () => {
           </p>
         </div>
         <div className="flex gap-x-2">
-          <button
-            onClick={() => handleReadBiometry()}
-            className="btn btn-secondary flex items-center"
-          >
-            <Fingerprint className="h-4 w-4 mr-2" />
-            Ler biometria
-          </button>
+          {students.length > 0 && (
+            <button
+              onClick={() => handleReadBiometry()}
+              className="btn btn-secondary flex items-center"
+            >
+              <Fingerprint className="h-4 w-4 mr-2" />
+              Ler biometria
+            </button>
+          )}
           <button
             onClick={() => setShowForm(true)}
             className="btn btn-primary flex items-center"
@@ -450,6 +472,49 @@ const Students = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Endereço
+                  </label>
+                  <input
+                    type="text"
+                    {...register("address")}
+                    className="input w-full"
+                    placeholder="Rua Exemplo, 123 - Bairro"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Unidade Escolar
+                  </label>
+                  <select
+                    {...register("unitId", {
+                      required: "Unidade escolar é obrigatória",
+                    })}
+                    className="input w-full bg-white"
+                    disabled={loadingUnits}
+                    defaultValue=""
+                  >
+                    <option value="">Selecione uma unidade</option>
+                    {schoolUnits.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.unitId && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.unitId.message}
+                    </p>
+                  )}
+                  {loadingUnits && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Carregando unidades...
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Turma
                   </label>
                   <select
@@ -525,6 +590,9 @@ const Students = () => {
                   Biometria
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Presença
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -587,6 +655,27 @@ const Students = () => {
                       {student.inschool === true ? "Na escola" : "Ausente"}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        student.status === "ACTIVE"
+                          ? "bg-green-100 text-green-800"
+                          : student.status === "INACTIVE"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : student.status === "DELETED"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {student.status === "ACTIVE"
+                        ? "Aprovado"
+                        : student.status === "INACTIVE"
+                          ? "Pendente"
+                          : student.status === "DELETED"
+                            ? "Cancelado"
+                            : "Pendente"}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
@@ -605,13 +694,6 @@ const Students = () => {
                         title="Editar"
                       >
                         <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(student.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Excluir"
-                      >
-                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>

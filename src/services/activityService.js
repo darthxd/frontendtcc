@@ -92,12 +92,26 @@ export const activityService = {
     }
   },
 
-  // Submeter atividade
+  // Submeter atividade (suporta arquivo)
   submitActivity: async (activityId, submissionData) => {
     try {
+      // Se houver arquivo, enviar como FormData
+      let requestData = submissionData;
+      let headers = {};
+
+      if (submissionData.file instanceof File) {
+        const formData = new FormData();
+        formData.append("studentId", submissionData.studentId);
+        formData.append("answerText", submissionData.answerText || "");
+        formData.append("file", submissionData.file);
+        requestData = formData;
+        headers = { "Content-Type": "multipart/form-data" };
+      }
+
       const response = await api.post(
         `/activity/submission/${activityId}`,
-        submissionData,
+        requestData,
+        { headers },
       );
       return response.data;
     } catch (error) {
@@ -106,16 +120,20 @@ export const activityService = {
     }
   },
 
-  // Submeter nota
-  submitGrade: async (submissionId, gradeData) => {
+  // Submeter correção (nota e comentário)
+  submitCorrection: async (submissionId, correctionData) => {
     try {
       const response = await api.post(
         `/activity/submission/${submissionId}/grade`,
-        gradeData,
+        {
+          grade: correctionData.grade,
+          comment: correctionData.comment || "",
+          teacherId: correctionData.teacherId,
+        },
       );
       return response.data;
     } catch (error) {
-      console.error("Erro ao submeter nota:", error);
+      console.error("Erro ao submeter correção:", error);
       throw error;
     }
   },
@@ -201,12 +219,35 @@ export const activityService = {
   validateSubmissionData: (data) => {
     const errors = [];
 
-    if (!data.answerText || data.answerText.trim().length === 0) {
-      errors.push("Resposta é obrigatória");
+    // Permitir submissão apenas com texto ou arquivo
+    if (
+      (!data.answerText || data.answerText.trim().length === 0) &&
+      !data.file
+    ) {
+      errors.push("É necessário fornecer uma resposta ou anexar um arquivo");
     }
 
-    if (data.fileUrl && !isValidUrl(data.fileUrl)) {
-      errors.push("URL do arquivo inválida");
+    if (data.file && !(data.file instanceof File)) {
+      errors.push("Arquivo inválido");
+    }
+
+    return errors;
+  },
+
+  // Validar dados de correção
+  validateCorrectionData: (data) => {
+    const errors = [];
+
+    if (!data.grade && data.grade !== 0) {
+      errors.push("Nota é obrigatória");
+    }
+
+    if (data.grade < 0) {
+      errors.push("Nota não pode ser negativa");
+    }
+
+    if (!data.teacherId) {
+      errors.push("ID do professor é obrigatório");
     }
 
     return errors;

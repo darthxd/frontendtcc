@@ -29,6 +29,8 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
   const [studentData, setStudentData] = useState(null);
   const [submissionDetails, setSubmissionDetails] = useState(null);
   const [gradeValue, setGradeValue] = useState("");
+  const [commentValue, setCommentValue] = useState("");
+  const [teacherData, setTeacherData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [gradingLoading, setGradingLoading] = useState(false);
 
@@ -41,8 +43,23 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
     );
     if (isOpen && activity) {
       loadSubmissions();
+      loadTeacherData();
     }
   }, [isOpen, activity]);
+
+  const loadTeacherData = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user && user.username) {
+        const teacher = await activityService.getTeacherByUsername(
+          user.username,
+        );
+        setTeacherData(teacher);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados do professor:", error);
+    }
+  };
 
   const loadSubmissions = async () => {
     setLoading(true);
@@ -95,6 +112,7 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
       setSubmissionDetails(submissionResponse);
       setSelectedSubmission(submission);
       setGradeValue(submissionResponse.grade?.toString() || "");
+      setCommentValue(submissionResponse.comment || "");
     } catch (error) {
       toast.error("Erro ao carregar detalhes da submissão");
       console.error("Erro:", error);
@@ -109,13 +127,20 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
       return;
     }
 
+    if (!teacherData || !teacherData.id) {
+      toast.error("Dados do professor não encontrados");
+      return;
+    }
+
     setGradingLoading(true);
     try {
-      await activityService.submitGrade(selectedSubmission.id, {
+      await activityService.submitCorrection(selectedSubmission.id, {
         grade: parseFloat(gradeValue),
+        comment: commentValue || "",
+        teacherId: teacherData.id,
       });
 
-      toast.success("Nota atribuída com sucesso!");
+      toast.success("Correção enviada com sucesso!");
 
       // Atualizar a lista de submissões
       await loadSubmissions();
@@ -125,13 +150,22 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
       setStudentData(null);
       setSubmissionDetails(null);
       setGradeValue("");
+      setCommentValue("");
+
+      // Recarregar dados da submissão para mostrar nota e comentário
+      if (selectedSubmission) {
+        const updatedSubmission = await activityService.getSubmissionById(
+          selectedSubmission.id,
+        );
+        setSubmissionDetails(updatedSubmission);
+      }
 
       // Notificar componente pai
       if (onGradeSubmitted) {
         onGradeSubmitted();
       }
     } catch (error) {
-      toast.error("Erro ao atribuir nota");
+      toast.error("Erro ao enviar correção");
       console.error("Erro:", error);
     } finally {
       setGradingLoading(false);
@@ -374,16 +408,16 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
                         </div>
                       )}
 
-                      {/* Atribuir Nota */}
+                      {/* Atribuir Nota e Comentário */}
                       <div className="bg-blue-50 rounded-lg p-4">
                         <h4 className="font-medium text-gray-900 mb-3 flex items-center">
                           <Star className="h-4 w-4 mr-2" />
-                          Atribuir Nota
+                          Correção da Atividade
                         </h4>
                         {submissionDetails.grade !== null &&
                           submissionDetails.grade !== undefined && (
                             <div className="mb-4 p-3 bg-green-100 border border-green-200 rounded-md">
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center">
                                   <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
                                   <span className="text-sm text-green-800">
@@ -408,11 +442,21 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
                                   %
                                 </span>
                               </div>
+                              {submissionDetails.comment && (
+                                <div className="mt-2 pt-2 border-t border-green-200">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">
+                                    Comentário do Professor:
+                                  </p>
+                                  <p className="text-sm text-gray-700 italic">
+                                    "{submissionDetails.comment}"
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
 
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-1">
+                        <div className="space-y-3">
+                          <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               {submissionDetails.grade !== null
                                 ? "Nova Nota"
@@ -430,10 +474,24 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
                               placeholder="0.0"
                             />
                           </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Comentário (opcional)
+                            </label>
+                            <textarea
+                              value={commentValue}
+                              onChange={(e) => setCommentValue(e.target.value)}
+                              className="input"
+                              rows="3"
+                              placeholder="Deixe um comentário sobre a correção..."
+                            />
+                          </div>
+
                           <button
                             onClick={handleSubmitGrade}
                             disabled={gradingLoading || !gradeValue}
-                            className="btn btn-primary flex items-center"
+                            className="btn btn-primary w-full flex items-center justify-center"
                           >
                             {gradingLoading ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -441,8 +499,8 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
                               <CheckCircle className="h-4 w-4 mr-2" />
                             )}
                             {submissionDetails.grade !== null
-                              ? "Atualizar Nota"
-                              : "Atribuir Nota"}
+                              ? "Atualizar Correção"
+                              : "Enviar Correção"}
                           </button>
                         </div>
                       </div>

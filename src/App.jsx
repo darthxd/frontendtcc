@@ -13,11 +13,24 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import SecretaryDashboard from "./pages/SecretaryDashboard";
+import SecretaryEnrollments from "./pages/SecretaryEnrollments";
+import SecretaryNewEnrollment from "./pages/SecretaryNewEnrollment";
+import SecretaryLogs from "./pages/SecretaryLogs";
+import CoordinatorDashboard from "./pages/CoordinatorDashboard";
+import CoordinatorClasses from "./pages/CoordinatorClasses";
+import CoordinatorPerformance from "./pages/CoordinatorPerformance";
+import CoordinatorSchedules from "./pages/CoordinatorSchedules";
 import StudentActivities from "./pages/StudentActivities";
+import StudentAttendance from "./pages/StudentAttendance";
 import Activities from "./pages/Activities";
 import AttendanceCall from "./pages/AttendanceCall";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
+import Admins from "./pages/Admins";
+import Secretaries from "./pages/Secretaries";
+import Coordinators from "./pages/Coordinators";
+import SchoolUnits from "./pages/SchoolUnits";
 import Classes from "./pages/Classes";
 import Subjects from "./pages/Subjects";
 import Unauthorized from "./pages/Unauthorized";
@@ -92,6 +105,10 @@ function AppContent() {
                         return <TeacherDashboard />;
                       case "ROLE_STUDENT":
                         return <StudentDashboard />;
+                      case "ROLE_SECRETARY":
+                        return <SecretaryDashboard />;
+                      case "ROLE_COORDINATOR":
+                        return <CoordinatorDashboard />;
                       default:
                         return <Navigate to="/login" replace />;
                     }
@@ -126,7 +143,7 @@ function AppContent() {
           <Route
             path="/students"
             element={
-              <ProtectedRoute requiredRole="ROLE_ADMIN">
+              <ProtectedRoute requiredRole={["ROLE_ADMIN", "ROLE_SECRETARY"]}>
                 <Layout>
                   <Students />
                 </Layout>
@@ -137,20 +154,92 @@ function AppContent() {
           <Route
             path="/teachers"
             element={
-              <ProtectedRoute requiredRole="ROLE_ADMIN">
+              <ProtectedRoute requiredRole={["ROLE_ADMIN", "ROLE_SECRETARY"]}>
                 <Layout>
                   <Teachers />
                 </Layout>
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/admins"
+            element={
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
+                <Layout>
+                  <Admins />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/secretaries"
+            element={
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
+                <Layout>
+                  <Secretaries />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/coordinators"
+            element={
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
+                <Layout>
+                  <Coordinators />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/school-units"
+            element={
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
+                <Layout>
+                  <SchoolUnits />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/classes"
             element={
               <ProtectedRoute requiredRole="ROLE_ADMIN">
                 <Layout>
                   <Classes />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/coordinator/classes"
+            element={
+              <ProtectedRoute requiredRole="ROLE_COORDINATOR">
+                <Layout>
+                  <CoordinatorClasses />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/coordinator/performance"
+            element={
+              <ProtectedRoute requiredRole="ROLE_COORDINATOR">
+                <Layout>
+                  <CoordinatorPerformance />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/coordinator/schedules"
+            element={
+              <ProtectedRoute requiredRole="ROLE_COORDINATOR">
+                <Layout>
+                  <CoordinatorSchedules />
                 </Layout>
               </ProtectedRoute>
             }
@@ -168,11 +257,55 @@ function AppContent() {
           />
 
           <Route
+            path="/secretary/enrollments"
+            element={
+              <ProtectedRoute requiredRole="ROLE_SECRETARY">
+                <Layout>
+                  <SecretaryEnrollments />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/secretary/new-enrollment"
+            element={
+              <ProtectedRoute requiredRole="ROLE_SECRETARY">
+                <Layout>
+                  <SecretaryNewEnrollment />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/secretary/logs"
+            element={
+              <ProtectedRoute requiredRole="ROLE_SECRETARY">
+                <Layout>
+                  <SecretaryLogs />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/student-activities"
             element={
               <ProtectedRoute requiredRole="ROLE_STUDENT">
                 <Layout>
                   <StudentActivities />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student-attendance"
+            element={
+              <ProtectedRoute requiredRole="ROLE_STUDENT">
+                <Layout>
+                  <StudentAttendance />
                 </Layout>
               </ProtectedRoute>
             }

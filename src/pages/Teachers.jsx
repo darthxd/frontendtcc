@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import api from "../services/api";
+import { teacherService } from "../services/teacherService";
+import { schoolUnitService } from "../services/schoolUnitService";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
@@ -18,6 +20,8 @@ const Teachers = () => {
   const [expandedClassesRows, setExpandedClassesRows] = useState({});
   const [schoolClasses, setSchoolClasses] = useState([]);
   const [loadingSchoolClasses, setLoadingSchoolClasses] = useState(true);
+  const [schoolUnits, setSchoolUnits] = useState([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
 
   const {
     register,
@@ -31,6 +35,7 @@ const Teachers = () => {
     fetchTeachers();
     fetchSubjects();
     fetchSchoolClasses();
+    fetchSchoolUnits();
   }, []);
 
   useEffect(() => {
@@ -145,6 +150,7 @@ const Teachers = () => {
       email: "",
       phone: "",
       birthdate: "",
+      unitId: "",
       subjectIds: [],
       schoolClassIds: [],
     });
@@ -159,10 +165,10 @@ const Teachers = () => {
         schoolClassIds: (data.schoolClassIds || []).map((id) => Number(id)),
       };
       if (editingTeacher) {
-        await api.put(`/teacher/${editingTeacher.id}`, payload);
+        await teacherService.updateTeacher(editingTeacher.id, payload);
         toast.success("Professor atualizado com sucesso!");
       } else {
-        await api.post("/teacher", payload);
+        await teacherService.createTeacher(payload);
         toast.success("Professor criado com sucesso!");
       }
 
@@ -171,7 +177,7 @@ const Teachers = () => {
       reset();
       fetchTeachers();
     } catch (error) {
-      toast.error("Erro ao salvar professor");
+      toast.error(error.message || "Erro ao salvar professor");
       console.error("Erro:", error);
     }
   };
@@ -224,6 +230,19 @@ const Teachers = () => {
         toast.error("Erro ao excluir professor");
         console.error("Erro:", error);
       }
+    }
+  };
+
+  const fetchSchoolUnits = async () => {
+    try {
+      setLoadingUnits(true);
+      const units = await schoolUnitService.getAllSchoolUnits();
+      setSchoolUnits(units);
+    } catch (error) {
+      toast.error("Erro ao carregar unidades escolares");
+      console.error("Erro:", error);
+    } finally {
+      setLoadingUnits(false);
     }
   };
 
@@ -395,6 +414,37 @@ const Teachers = () => {
                     placeholder="(11) 99999-9999"
                     maxLength={11}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Unidade Escolar
+                  </label>
+                  <select
+                    {...register("unitId", {
+                      required: "Unidade escolar é obrigatória",
+                    })}
+                    className="input w-full bg-white"
+                    disabled={loadingUnits}
+                    defaultValue=""
+                  >
+                    <option value="">Selecione uma unidade</option>
+                    {schoolUnits.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.unitId && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.unitId.message}
+                    </p>
+                  )}
+                  {loadingUnits && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Carregando unidades...
+                    </p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">

@@ -12,6 +12,12 @@ import {
   ClipboardCheck,
   Rocket,
   FileText,
+  Calendar,
+  TrendingUp,
+  Shield,
+  UserCog,
+  Building2,
+  Fingerprint,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
@@ -39,16 +45,91 @@ const Layout = ({ children }) => {
       role: "ROLE_STUDENT",
     },
     {
+      name: "Minhas Presenças",
+      href: "/student-attendance",
+      icon: Calendar,
+      role: "ROLE_STUDENT",
+    },
+    {
       name: "Fazer Chamada",
       href: "/attendance-call",
       icon: ClipboardCheck,
       role: "ROLE_TEACHER",
     },
+    // Secretary Menu Items
+    {
+      name: "Alunos",
+      href: "/students",
+      icon: Users,
+      role: "ROLE_SECRETARY",
+    },
+    {
+      name: "Professores",
+      href: "/teachers",
+      icon: GraduationCap,
+      role: "ROLE_SECRETARY",
+    },
+    {
+      name: "Matrículas",
+      href: "/secretary/enrollments",
+      icon: FileText,
+      role: "ROLE_SECRETARY",
+    },
+    {
+      name: "Logs de Acesso",
+      href: "/secretary/logs",
+      icon: Fingerprint,
+      role: "ROLE_SECRETARY",
+    },
+    // Coordinator Menu Items
+    {
+      name: "Turmas",
+      href: "/coordinator/classes",
+      icon: BookOpen,
+      role: "ROLE_COORDINATOR",
+    },
+    {
+      name: "Desempenho",
+      href: "/coordinator/performance",
+      icon: TrendingUp,
+      role: "ROLE_COORDINATOR",
+    },
+    {
+      name: "Horários",
+      href: "/coordinator/schedules",
+      icon: Calendar,
+      role: "ROLE_COORDINATOR",
+    },
+    // Admin Menu Items
     { name: "Alunos", href: "/students", icon: Users, role: "ROLE_ADMIN" },
     {
       name: "Professores",
       href: "/teachers",
       icon: GraduationCap,
+      role: "ROLE_ADMIN",
+    },
+    {
+      name: "Administradores",
+      href: "/admins",
+      icon: Users,
+      role: "ROLE_ADMIN",
+    },
+    {
+      name: "Secretarias",
+      href: "/secretaries",
+      icon: UserCog,
+      role: "ROLE_ADMIN",
+    },
+    {
+      name: "Coordenadores",
+      href: "/coordinators",
+      icon: Shield,
+      role: "ROLE_ADMIN",
+    },
+    {
+      name: "Unidades Escolares",
+      href: "/school-units",
+      icon: Building2,
       role: "ROLE_ADMIN",
     },
     { name: "Turmas", href: "/classes", icon: BookOpen, role: "ROLE_ADMIN" },
@@ -92,6 +173,20 @@ const Layout = ({ children }) => {
       if (hasRole("ROLE_STUDENT")) {
         const response = await api.get(
           `/student/username/${currentUser.username}`,
+        );
+        const data = response.data;
+        setDetailedUser(data);
+      }
+      if (hasRole("ROLE_COORDINATOR")) {
+        const response = await api.get(
+          `/coordinator/username/${currentUser.username}`,
+        );
+        const data = response.data;
+        setDetailedUser(data);
+      }
+      if (hasRole("ROLE_SECRETARY")) {
+        const response = await api.get(
+          `/secretary/username/${currentUser.username}`,
         );
         const data = response.data;
         setDetailedUser(data);
@@ -164,7 +259,11 @@ const Layout = ({ children }) => {
                       ? "Professor"
                       : currentUser?.role === "ROLE_STUDENT"
                         ? "Aluno"
-                        : "-"}
+                        : currentUser?.role === "ROLE_COORDINATOR"
+                          ? "Coordenador"
+                          : currentUser?.role === "ROLE_SECRETARY"
+                            ? "Secretária"
+                            : "-"}
                 </p>
               </div>
             </div>
@@ -261,7 +360,11 @@ const Layout = ({ children }) => {
                           ? "Professor"
                           : currentUser?.role === "ROLE_STUDENT"
                             ? "Aluno"
-                            : "-"}
+                            : currentUser?.role === "ROLE_COORDINATOR"
+                              ? "Coordenador"
+                              : currentUser?.role === "ROLE_SECRETARY"
+                                ? "Secretária"
+                                : "-"}
                     </p>
                   </div>
                 </div>
