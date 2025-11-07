@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, BookOpen, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  BookOpen,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
@@ -29,37 +36,71 @@ const CoordinatorPerformance = () => {
       const studentsResponse = await api.get("/student");
       const students = studentsResponse.data || [];
 
-      // Calcular performance por turma (simulado)
-      const performanceByClass = classes.map((cls) => {
-        const classStudents = students.filter((s) => s.schoolClass?.id === cls.id);
-        const performance = Math.floor(Math.random() * 30) + 70; // Simulado
-        const studentCount = classStudents.length;
+      // Calcular performance real por turma baseado nas notas
+      const performanceByClass = await Promise.all(
+        classes.map(async (cls) => {
+          const classStudents = students.filter(
+            (s) => s.schoolClass?.id === cls.id,
+          );
 
-        return {
-          ...cls,
-          performance,
-          studentCount,
-          trend: Math.random() > 0.5 ? "up" : "down",
-          trendValue: Math.floor(Math.random() * 10) + 1,
-        };
-      });
+          let performance = 0;
+          let hasGrades = false;
+
+          try {
+            // Buscar notas médias por matéria da turma (todos os bimestres)
+            const gradesResponse = await api.get(
+              `/grade/class/${cls.id}/performance`,
+            );
+            const gradesBySubject = gradesResponse.data || {};
+
+            // Calcular média geral entre todas as matérias
+            const subjects = Object.keys(gradesBySubject);
+            if (subjects.length > 0) {
+              const totalAverage = subjects.reduce((sum, subject) => {
+                return sum + (gradesBySubject[subject] || 0);
+              }, 0);
+
+              performance = Math.round((totalAverage / subjects.length) * 10); // Convertendo para porcentagem (0-100)
+              hasGrades = true;
+            }
+          } catch (error) {
+            console.error(`Erro ao buscar notas da turma ${cls.name}:`, error);
+          }
+
+          // Se não houver notas, performance fica como 0
+          if (!hasGrades) {
+            performance = 0;
+          }
+
+          return {
+            ...cls,
+            performance,
+            studentCount: classStudents.length,
+            hasGrades,
+          };
+        }),
+      );
 
       // Ordenar por performance
-      const sorted = [...performanceByClass].sort((a, b) => b.performance - a.performance);
+      const sorted = [...performanceByClass].sort(
+        (a, b) => b.performance - a.performance,
+      );
 
       // Calcular estatísticas
-      const avgPerformance = performanceByClass.length > 0
-        ? Math.round(
-            performanceByClass.reduce((sum, cls) => sum + cls.performance, 0) /
-              performanceByClass.length
-          )
-        : 0;
+      const classesWithGrades = performanceByClass.filter((c) => c.hasGrades);
+      const avgPerformance =
+        classesWithGrades.length > 0
+          ? Math.round(
+              classesWithGrades.reduce((sum, cls) => sum + cls.performance, 0) /
+                classesWithGrades.length,
+            )
+          : 0;
 
       setPerformanceData(sorted);
       setStats({
         averagePerformance: avgPerformance,
-        bestClass: sorted[0] || null,
-        worstClass: sorted[sorted.length - 1] || null,
+        bestClass: sorted.find((c) => c.hasGrades) || null,
+        worstClass: sorted.reverse().find((c) => c.hasGrades) || null,
         totalClasses: classes.length,
       });
     } catch (error) {
@@ -82,7 +123,8 @@ const CoordinatorPerformance = () => {
     return "bg-red-100";
   };
 
-  const getPerformanceLabel = (performance) => {
+  const getPerformanceLabel = (performance, hasGrades) => {
+    if (!hasGrades) return "Sem Dados";
     if (performance >= 80) return "Excelente";
     if (performance >= 60) return "Bom";
     return "Precisa Melhorar";
@@ -129,9 +171,11 @@ const CoordinatorPerformance = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Análise de Desempenho</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Análise de Desempenho
+          </h1>
           <p className="text-gray-600">
-            Acompanhe o desempenho acadêmico das turmas
+            Acompanhe o desempenho acadêmico das turmas com base nas notas reais
           </p>
         </div>
         <button
@@ -152,7 +196,7 @@ const CoordinatorPerformance = () => {
               <p className="text-3xl font-bold text-gray-900 mt-2">
                 {stats.averagePerformance}%
               </p>
-              <p className="text-xs text-gray-500 mt-1">Todas as turmas</p>
+              <p className="text-xs text-gray-500 mt-1">Turmas com notas</p>
             </div>
             <div className="bg-blue-100 rounded-lg p-3">
               <TrendingUp className="h-8 w-8 text-blue-600" />
@@ -163,7 +207,9 @@ const CoordinatorPerformance = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total de Turmas</p>
+              <p className="text-sm font-medium text-gray-500">
+                Total de Turmas
+              </p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
                 {stats.totalClasses}
               </p>
@@ -178,7 +224,9 @@ const CoordinatorPerformance = () => {
         {stats.bestClass && (
           <div className="card bg-green-50 border-green-200">
             <div>
-              <p className="text-sm font-medium text-green-700">Melhor Desempenho</p>
+              <p className="text-sm font-medium text-green-700">
+                Melhor Desempenho
+              </p>
               <p className="text-2xl font-bold text-green-900 mt-2">
                 {stats.bestClass.name}
               </p>
@@ -192,7 +240,9 @@ const CoordinatorPerformance = () => {
         {stats.worstClass && (
           <div className="card bg-orange-50 border-orange-200">
             <div>
-              <p className="text-sm font-medium text-orange-700">Precisa de Atenção</p>
+              <p className="text-sm font-medium text-orange-700">
+                Precisa de Atenção
+              </p>
               <p className="text-2xl font-bold text-orange-900 mt-2">
                 {stats.worstClass.name}
               </p>
@@ -213,9 +263,11 @@ const CoordinatorPerformance = () => {
               Informação sobre Desempenho
             </h3>
             <p className="text-sm text-blue-700 mt-1">
-              Os dados de desempenho são calculados com base em notas, frequência e atividades
-              entregues pelos alunos. Turmas com desempenho abaixo de 60% necessitam de atenção
-              especial.
+              Os dados de desempenho são calculados com base nas notas reais dos
+              alunos em todas as matérias e bimestres. A média é calculada entre
+              todas as disciplinas. Turmas sem notas cadastradas aparecem com 0%
+              ou "Sem Dados". Turmas com desempenho abaixo de 60% necessitam de
+              atenção especial.
             </p>
           </div>
         </div>
@@ -260,7 +312,7 @@ const CoordinatorPerformance = () => {
                     Desempenho
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tendência
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Avaliação
@@ -274,11 +326,11 @@ const CoordinatorPerformance = () => {
                       <div className="flex items-center">
                         <span
                           className={`inline-flex items-center justify-center h-8 w-8 rounded-full font-bold ${
-                            index === 0
+                            index === 0 && classItem.hasGrades
                               ? "bg-yellow-100 text-yellow-800"
-                              : index === 1
+                              : index === 1 && classItem.hasGrades
                                 ? "bg-gray-200 text-gray-700"
-                                : index === 2
+                                : index === 2 && classItem.hasGrades
                                   ? "bg-orange-100 text-orange-700"
                                   : "bg-gray-100 text-gray-600"
                           }`}
@@ -313,46 +365,61 @@ const CoordinatorPerformance = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mr-2" style={{ width: "100px" }}>
+                        <div
+                          className="w-full bg-gray-200 rounded-full h-2 mr-2"
+                          style={{ width: "100px" }}
+                        >
                           <div
                             className={`h-2 rounded-full ${
-                              classItem.performance >= 80
-                                ? "bg-green-500"
-                                : classItem.performance >= 60
-                                  ? "bg-yellow-500"
-                                  : "bg-red-500"
+                              !classItem.hasGrades
+                                ? "bg-gray-400"
+                                : classItem.performance >= 80
+                                  ? "bg-green-500"
+                                  : classItem.performance >= 60
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
                             }`}
-                            style={{ width: `${classItem.performance}%` }}
+                            style={{
+                              width: `${classItem.hasGrades ? classItem.performance : 0}%`,
+                            }}
                           ></div>
                         </div>
-                        <span className={`text-sm font-semibold ${getPerformanceColor(classItem.performance)}`}>
-                          {classItem.performance}%
+                        <span
+                          className={`text-sm font-semibold ${
+                            classItem.hasGrades
+                              ? getPerformanceColor(classItem.performance)
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {classItem.hasGrades
+                            ? `${classItem.performance}%`
+                            : "N/A"}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {classItem.trend === "up" ? (
-                          <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
-                        )}
-                        <span
-                          className={`text-sm font-medium ${
-                            classItem.trend === "up" ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {classItem.trendValue}%
+                      {classItem.hasGrades ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Com Notas
                         </span>
-                      </div>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                          Sem Notas
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPerformanceBgColor(
-                          classItem.performance
-                        )} ${getPerformanceColor(classItem.performance)}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          !classItem.hasGrades
+                            ? "bg-gray-100 text-gray-600"
+                            : `${getPerformanceBgColor(classItem.performance)} ${getPerformanceColor(classItem.performance)}`
+                        }`}
                       >
-                        {getPerformanceLabel(classItem.performance)}
+                        {getPerformanceLabel(
+                          classItem.performance,
+                          classItem.hasGrades,
+                        )}
                       </span>
                     </td>
                   </tr>
@@ -364,13 +431,17 @@ const CoordinatorPerformance = () => {
       </div>
 
       {/* Performance Distribution */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card bg-green-50">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-700">Excelente</p>
               <p className="text-2xl font-bold text-green-900 mt-1">
-                {performanceData.filter((c) => c.performance >= 80).length}
+                {
+                  performanceData.filter(
+                    (c) => c.hasGrades && c.performance >= 80,
+                  ).length
+                }
               </p>
               <p className="text-xs text-green-600 mt-1">≥ 80% de desempenho</p>
             </div>
@@ -385,9 +456,16 @@ const CoordinatorPerformance = () => {
             <div>
               <p className="text-sm font-medium text-yellow-700">Bom</p>
               <p className="text-2xl font-bold text-yellow-900 mt-1">
-                {performanceData.filter((c) => c.performance >= 60 && c.performance < 80).length}
+                {
+                  performanceData.filter(
+                    (c) =>
+                      c.hasGrades && c.performance >= 60 && c.performance < 80,
+                  ).length
+                }
               </p>
-              <p className="text-xs text-yellow-600 mt-1">60% - 79% de desempenho</p>
+              <p className="text-xs text-yellow-600 mt-1">
+                60% - 79% de desempenho
+              </p>
             </div>
             <div className="bg-yellow-200 rounded-lg p-3">
               <TrendingUp className="h-6 w-6 text-yellow-700" />
@@ -398,14 +476,39 @@ const CoordinatorPerformance = () => {
         <div className="card bg-red-50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-red-700">Precisa Melhorar</p>
-              <p className="text-2xl font-bold text-red-900 mt-1">
-                {performanceData.filter((c) => c.performance < 60).length}
+              <p className="text-sm font-medium text-red-700">
+                Precisa Melhorar
               </p>
-              <p className="text-xs text-red-600 mt-1">{"<"} 60% de desempenho</p>
+              <p className="text-2xl font-bold text-red-900 mt-1">
+                {
+                  performanceData.filter(
+                    (c) => c.hasGrades && c.performance < 60,
+                  ).length
+                }
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                {"<"} 60% de desempenho
+              </p>
             </div>
             <div className="bg-red-200 rounded-lg p-3">
               <TrendingDown className="h-6 w-6 text-red-700" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Sem Dados</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {performanceData.filter((c) => !c.hasGrades).length}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Sem notas cadastradas
+              </p>
+            </div>
+            <div className="bg-gray-200 rounded-lg p-3">
+              <AlertCircle className="h-6 w-6 text-gray-700" />
             </div>
           </div>
         </div>

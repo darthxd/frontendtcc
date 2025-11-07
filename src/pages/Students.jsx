@@ -668,7 +668,7 @@ const Students = () => {
                       }`}
                     >
                       {student.status === "ACTIVE"
-                        ? "Aprovado"
+                        ? "Ativo"
                         : student.status === "INACTIVE"
                           ? "Pendente"
                           : student.status === "DELETED"

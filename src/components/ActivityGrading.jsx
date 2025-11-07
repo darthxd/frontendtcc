@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Clock,
   X,
+  Download,
 } from "lucide-react";
 import { activityService } from "../services/activityService";
 import toast from "react-hot-toast";
@@ -393,18 +394,44 @@ const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
                       {/* Arquivo Anexo */}
                       {submissionDetails.fileUrl && (
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-3">
+                          <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                            <FileText className="h-4 w-4 mr-2" />
                             Arquivo Anexo
                           </h4>
-                          <a
-                            href={submissionDetails.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center text-primary-600 hover:text-primary-700"
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Visualizar arquivo
-                          </a>
+                          <div className="bg-white border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <FileText className="h-8 w-8 text-blue-500 mr-3" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    Arquivo enviado pelo aluno
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    Clique para visualizar ou baixar
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <a
+                                  href={submissionDetails.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-secondary btn-sm flex items-center"
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  Visualizar
+                                </a>
+                                <a
+                                  href={submissionDetails.fileUrl}
+                                  download
+                                  className="btn btn-primary btn-sm flex items-center"
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Baixar
+                                </a>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
 

@@ -50,6 +50,10 @@ const CoordinatorDashboard = () => {
       const schedulesResponse = await api.get("/classschedule");
       const schedules = schedulesResponse.data || [];
 
+      // Buscar disciplinas
+      const subjectsResponse = await api.get("/schoolsubject");
+      const subjects = subjectsResponse.data || [];
+
       // Calcular performance média (simulado)
       const averagePerformance = 75;
 
@@ -64,8 +68,21 @@ const CoordinatorDashboard = () => {
       // Pegar as 3 primeiras turmas para exibir
       const recentClasses = classesWithStudents.slice(0, 3);
 
-      // Pegar os próximos horários (simulado)
-      const upcomingSchedules = schedules.slice(0, 5);
+      // Enriquecer horários com informações das disciplinas e turmas
+      const enrichedSchedules = schedules.map((schedule) => {
+        const subject = subjects.find((s) => s.id === schedule.subjectId);
+        const schoolClass = classes.find(
+          (c) => c.id === schedule.schoolClassId,
+        );
+        return {
+          ...schedule,
+          subjectName: subject?.name || "Disciplina não encontrada",
+          className: schoolClass?.name || "Turma não encontrada",
+        };
+      });
+
+      // Pegar os próximos 5 horários
+      const upcomingSchedules = enrichedSchedules.slice(0, 5);
 
       setStats({
         totalClasses: classes.length,
@@ -96,8 +113,11 @@ const CoordinatorDashboard = () => {
   const getYearLabel = (year) => {
     const years = {
       FIRST: "1º Ano",
+      FIRST_YEAR: "1º Ano",
       SECOND: "2º Ano",
+      SECOND_YEAR: "2º Ano",
       THIRD: "3º Ano",
+      THIRD_YEAR: "3º Ano",
     };
     return years[year] || year;
   };
@@ -109,6 +129,19 @@ const CoordinatorDashboard = () => {
       EVENING: "Noite",
     };
     return shifts[shift] || shift;
+  };
+
+  const getDayShort = (day) => {
+    const days = {
+      MONDAY: "Seg",
+      TUESDAY: "Ter",
+      WEDNESDAY: "Qua",
+      THURSDAY: "Qui",
+      FRIDAY: "Sex",
+      SATURDAY: "Sáb",
+      SUNDAY: "Dom",
+    };
+    return days[day] || day;
   };
 
   if (loading) {
@@ -356,19 +389,29 @@ const CoordinatorDashboard = () => {
               {stats.upcomingSchedules.map((schedule, index) => (
                 <div
                   key={schedule.id || index}
-                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="p-3 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer"
+                  onClick={() => navigate("/coordinator/schedules")}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-purple-100 rounded-lg p-2">
-                      <Clock className="h-4 w-4 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {schedule.subject?.name || "Disciplina"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {schedule.startTime} - {schedule.endTime}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-purple-100 rounded-lg p-2">
+                        <Clock className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {schedule.subjectName}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {schedule.className}
+                        </p>
+                        <div className="flex items-center text-xs text-gray-500 mt-1">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {getDayShort(schedule.dayOfWeek)} •{" "}
+                          <Clock className="h-3 w-3 ml-2 mr-1" />
+                          {schedule.startTime?.substring(0, 5)} -{" "}
+                          {schedule.endTime?.substring(0, 5)}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

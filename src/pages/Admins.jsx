@@ -31,7 +31,7 @@ const Admins = () => {
     const filtered = admins.filter(
       (admin) =>
         admin.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        admin.username?.toLowerCase().includes(searchTerm.toLowerCase())
+        admin.username?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredAdmins(filtered);
   }, [searchTerm, admins]);
@@ -157,9 +157,7 @@ const Admins = () => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {editingAdmin
-                    ? "Editar Administrador"
-                    : "Novo Administrador"}
+                  {editingAdmin ? "Editar Administrador" : "Novo Administrador"}
                 </h2>
                 <button
                   onClick={handleCancel}
@@ -341,9 +339,6 @@ const Admins = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nome
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Usuário
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -362,16 +357,9 @@ const Admins = () => {
                         <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
                           <Shield className="h-5 w-5 text-primary-600" />
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {admin.name}
-                          </div>
+                        <div className="text-sm text-gray-900 ml-4">
+                          {admin.username}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {admin.username}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
