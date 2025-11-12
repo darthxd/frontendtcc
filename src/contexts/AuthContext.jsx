@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authService } from "../services/authService";
 import { isTokenExpired } from "../utils/jwt";
+import api from "../services/api";
 
 const AuthContext = createContext();
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = () => {
+    const initAuth = async () => {
       // Verifica se o token está válido antes de definir como autenticado
       const token = authService.getToken();
       const authenticated = authService.isAuthenticated();
@@ -29,12 +30,49 @@ export const AuthProvider = ({ children }) => {
         authService.clearExpiredToken();
         setIsAuthenticated(false);
         setUser(null);
-      } else {
-        setIsAuthenticated(authenticated);
-        setUser(currentUser);
-      }
+        setIsLoading(false);
+      } else if (authenticated && currentUser) {
+        // Se o usuário já tem dados completos (id existe), usa os dados do localStorage
+        if (currentUser.id) {
+          setIsAuthenticated(authenticated);
+          setUser(currentUser);
+          setIsLoading(false);
+        } else {
+          // Se não tem id, busca dados completos do usuário
+          try {
+            const fullUser = await authService.getUserByUsername(
+              currentUser.username,
+            );
+            const updatedUser = {
+              id: fullUser.id,
+              username: fullUser.username,
+              name: fullUser.name,
+              email: fullUser.email,
+              role: currentUser.role,
+              ...fullUser,
+            };
 
-      setIsLoading(false);
+            // Atualiza o localStorage com dados completos
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+
+            setIsAuthenticated(true);
+            setUser(updatedUser);
+          } catch (error) {
+            console.error(
+              "Erro ao carregar dados completos do usuário:",
+              error,
+            );
+            // Em caso de erro, usa os dados básicos disponíveis
+            setIsAuthenticated(authenticated);
+            setUser(currentUser);
+          }
+          setIsLoading(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        setIsLoading(false);
+      }
     };
 
     const handleAuthChange = () => {

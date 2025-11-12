@@ -1,5 +1,5 @@
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -23,6 +23,7 @@ import CoordinatorPerformance from "./pages/CoordinatorPerformance";
 import CoordinatorSchedules from "./pages/CoordinatorSchedules";
 import StudentActivities from "./pages/StudentActivities";
 import StudentAttendance from "./pages/StudentAttendance";
+import StudentSchedules from "./pages/StudentSchedules";
 import Activities from "./pages/Activities";
 import AttendanceCall from "./pages/AttendanceCall";
 import Students from "./pages/Students";
@@ -33,6 +34,7 @@ import Coordinators from "./pages/Coordinators";
 import SchoolUnits from "./pages/SchoolUnits";
 import Classes from "./pages/Classes";
 import Subjects from "./pages/Subjects";
+import Messages from "./pages/Messages";
 import Unauthorized from "./pages/Unauthorized";
 import TokenWarning from "./components/TokenWarning";
 
@@ -306,6 +308,28 @@ function AppContent() {
               <ProtectedRoute requiredRole="ROLE_STUDENT">
                 <Layout>
                   <StudentAttendance />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student-schedules"
+            element={
+              <ProtectedRoute requiredRole="ROLE_STUDENT">
+                <Layout>
+                  <StudentSchedules />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Messages />
                 </Layout>
               </ProtectedRoute>
             }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   GraduationCap,
@@ -10,6 +11,7 @@ import {
   Users,
   BarChart3,
   Award,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { activityService } from "../services/activityService";
@@ -31,6 +33,7 @@ import toast from "react-hot-toast";
 import api from "../services/api";
 
 const StudentDashboard = () => {
+  const navigate = useNavigate();
   const [studentData, setStudentData] = useState(null);
   const [activities, setActivities] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -138,6 +141,64 @@ const StudentDashboard = () => {
           color="bg-indigo-500"
           subtitle={`${attendanceStats.attendedClasses}/${attendanceStats.totalClasses} presenças`}
         />
+      </div>
+
+      {/* Ações Rápidas */}
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Ações Rápidas
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => navigate("/student-activities")}
+            className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 rounded-lg p-2 group-hover:bg-blue-200 transition-colors">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-medium text-gray-900">Minhas Atividades</h4>
+                <p className="text-xs text-gray-500">Ver e enviar atividades</p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600" />
+          </button>
+
+          <button
+            onClick={() => navigate("/student-schedules")}
+            className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="bg-purple-100 rounded-lg p-2 group-hover:bg-purple-200 transition-colors">
+                <Calendar className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-medium text-gray-900">Meus Horários</h4>
+                <p className="text-xs text-gray-500">Consultar grade horária</p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600" />
+          </button>
+
+          <button
+            onClick={() => navigate("/student-attendance")}
+            className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="bg-green-100 rounded-lg p-2 group-hover:bg-green-200 transition-colors">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-medium text-gray-900">Minhas Presenças</h4>
+                <p className="text-xs text-gray-500">
+                  Ver histórico de presença
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-green-600" />
+          </button>
+        </div>
       </div>
 
       {/* Cards de Informações Detalhadas */}

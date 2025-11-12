@@ -197,6 +197,27 @@ const Students = () => {
     });
   };
 
+  const getYearLabel = (year) => {
+    const years = {
+      FIRST: "1º Ano",
+      FIRST_YEAR: "1º Ano",
+      SECOND: "2º Ano",
+      SECOND_YEAR: "2º Ano",
+      THIRD: "3º Ano",
+      THIRD_YEAR: "3º Ano",
+    };
+    return years[year] || year;
+  };
+
+  const getShiftLabel = (shift) => {
+    const shifts = {
+      MORNING: "Manhã",
+      AFTERNOON: "Tarde",
+      EVENING: "Noite",
+    };
+    return shifts[shift] || shift;
+  };
+
   const registerBiometry = async (studentId) => {
     try {
       await toast.promise(
@@ -742,15 +763,6 @@ const Students = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome de Usuário
-                </label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
-                  {selectedStudent.username || "-"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome Completo
                 </label>
                 <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
@@ -787,6 +799,15 @@ const Students = () => {
                         "$1.$2.$3-$4",
                       )
                     : "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Endereço
+                </label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                  {selectedStudent.address || "-"}
                 </p>
               </div>
 
@@ -865,13 +886,7 @@ const Students = () => {
                       Série/Ano
                     </label>
                     <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
-                      {selectedStudent.schoolClass.grade === "FIRST_YEAR"
-                        ? "Primeiro ano"
-                        : selectedStudent.schoolClass.grade === "SECOND_YEAR"
-                          ? "Segundo ano"
-                          : selectedStudent.schoolClass.grade === "THIRD_YEAR"
-                            ? "Terceiro ano"
-                            : "-"}
+                      {getYearLabel(selectedStudent.schoolClass.year)}
                     </p>
                   </div>
 
@@ -889,13 +904,7 @@ const Students = () => {
                       Turno
                     </label>
                     <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
-                      {selectedStudent.schoolClass.shift === "MORNING"
-                        ? "Manhã"
-                        : selectedStudent.schoolClass.shift === "AFTERNOON"
-                          ? "Tarde"
-                          : selectedStudent.schoolClass.shift === "NIGHT"
-                            ? "Noite"
-                            : "-"}
+                      {getShiftLabel(selectedStudent.schoolClass.shift)}
                     </p>
                   </div>
                 </div>

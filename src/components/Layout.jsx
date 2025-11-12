@@ -18,6 +18,7 @@ import {
   UserCog,
   Building2,
   Fingerprint,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
@@ -32,6 +33,7 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Mensagens", href: "/messages", icon: Mail },
     {
       name: "Atividades",
       href: "/activities",
@@ -47,6 +49,12 @@ const Layout = ({ children }) => {
     {
       name: "Minhas Presenças",
       href: "/student-attendance",
+      icon: Calendar,
+      role: "ROLE_STUDENT",
+    },
+    {
+      name: "Meus Horários",
+      href: "/student-schedules",
       icon: Calendar,
       role: "ROLE_STUDENT",
     },

@@ -34,9 +34,16 @@ export const authService = {
       // Decodificar o JWT para obter informações do usuário
       const payload = JSON.parse(atob(token.split(".")[1]));
 
+      // Buscar dados completos do usuário pelo username
+      const fullUser = await this.getUserByUsername(payload.sub);
+
       const user = {
-        username: payload.sub,
+        id: fullUser.id,
+        username: fullUser.username,
+        name: fullUser.name,
+        email: fullUser.email,
         role: payload.role,
+        ...fullUser, // Incluir todos os outros dados do usuário
       };
 
       localStorage.setItem("token", token);
@@ -48,6 +55,21 @@ export const authService = {
       return { token, user };
     } catch (error) {
       throw new Error("Credenciais inválidas");
+    }
+  },
+
+  /**
+   * Busca dados completos do usuário pelo username
+   * @param {string} username - Nome de usuário
+   * @returns {Promise<object>} Dados completos do usuário
+   */
+  async getUserByUsername(username) {
+    try {
+      const response = await api.get(`/user/username/${username}`);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar usuário por username:", error);
+      throw error;
     }
   },
 

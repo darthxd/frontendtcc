@@ -100,16 +100,6 @@ const CoordinatorDashboard = () => {
     }
   };
 
-  const getCourseLabel = (course) => {
-    const courses = {
-      ENSINO_MEDIO: "Ensino Médio",
-      TECNICO_INFORMATICA: "Técnico em Informática",
-      TECNICO_ADMINISTRACAO: "Técnico em Administração",
-      TECNICO_ELETRONICA: "Técnico em Eletrônica",
-    };
-    return courses[course] || course;
-  };
-
   const getYearLabel = (year) => {
     const years = {
       FIRST: "1º Ano",
@@ -342,8 +332,7 @@ const CoordinatorDashboard = () => {
                           {classItem.name}
                         </h4>
                         <p className="text-sm text-gray-500">
-                          {getCourseLabel(classItem.course)} -{" "}
-                          {getYearLabel(classItem.year)}
+                          {classItem.course} - {getYearLabel(classItem.year)}
                         </p>
                       </div>
                     </div>
