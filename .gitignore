@@ -28,3 +28,10 @@ dist-ssr
 backend/
 
 docs/
+
+build-and-deploy.bat
+teste-rapido.bat
+
+api-**.txt
+
+aplicar-correcoes.sh

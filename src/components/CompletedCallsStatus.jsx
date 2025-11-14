@@ -3,7 +3,7 @@ import { CheckCircle, XCircle, Lock, Calendar, Users } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
-const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
+const CompletedCallsStatus = ({ teacherData = null, teacherClasses = [] }) => {
   const [completedCalls, setCompletedCalls] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(
@@ -11,7 +11,7 @@ const CompletedCallsStatus = ({ teacherData, teacherClasses }) => {
   );
 
   useEffect(() => {
-    if (teacherClasses.length > 0) {
+    if (teacherClasses && teacherClasses.length > 0) {
       fetchCompletedCalls();
     }
   }, [teacherClasses, selectedMonth]);

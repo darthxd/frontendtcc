@@ -17,7 +17,12 @@ import {
 import { activityService } from "../services/activityService";
 import toast from "react-hot-toast";
 
-const ActivityGrading = ({ activity, isOpen, onClose, onGradeSubmitted }) => {
+const ActivityGrading = ({
+  activity = null,
+  isOpen = false,
+  onClose = () => {},
+  onGradeSubmitted = () => {},
+}) => {
   console.log("ActivityGrading component rendered with props:", {
     activity,
     isOpen,

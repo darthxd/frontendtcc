@@ -6,8 +6,15 @@ import { X, AlertTriangle } from "lucide-react";
  * Componente para exibir avisos sobre expiração de token
  */
 const TokenWarning = () => {
-  const { shouldShowWarning, warningMessage, dismissWarning } =
-    useTokenWarning(5);
+  const tokenWarning = useTokenWarning(5);
+
+  // Verificação de segurança
+  if (!tokenWarning) {
+    console.error("TokenWarning: useTokenWarning retornou undefined");
+    return null;
+  }
+
+  const { shouldShowWarning, warningMessage, dismissWarning } = tokenWarning;
 
   if (!shouldShowWarning) {
     return null;
@@ -49,7 +56,15 @@ const TokenWarning = () => {
  * Versão compacta do aviso de token para usar na barra de navegação
  */
 export const TokenWarningBadge = () => {
-  const { shouldShowWarning, warningMessage } = useTokenWarning(5);
+  const tokenWarning = useTokenWarning(5);
+
+  // Verificação de segurança
+  if (!tokenWarning) {
+    console.error("TokenWarningBadge: useTokenWarning retornou undefined");
+    return null;
+  }
+
+  const { shouldShowWarning, warningMessage } = tokenWarning;
 
   if (!shouldShowWarning) {
     return null;
@@ -66,7 +81,8 @@ export const TokenWarningBadge = () => {
 /**
  * Modal de aviso crítico quando o token está muito próximo da expiração
  */
-export const TokenExpirationModal = ({ isOpen, onClose, timeRemaining }) => {
+export const TokenExpirationModal = (props = {}) => {
+  const { isOpen = false, onClose = () => {}, timeRemaining = 0 } = props || {};
   if (!isOpen) return null;
 
   const minutes = Math.floor(timeRemaining / 60);

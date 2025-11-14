@@ -1,6 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { authService } from '../services/authService';
-import { isTokenExpired, getTokenExpirationTime, isTokenExpiringSoon } from '../utils/jwt';
+import { useState, useEffect, useCallback } from "react";
+import { authService } from "../services/authService";
+import {
+  isTokenExpired,
+  getTokenExpirationTime,
+  isTokenExpiringSoon,
+} from "../utils/jwt";
 
 /**
  * Hook personalizado para monitorar o status do token JWT
@@ -34,9 +38,8 @@ export const useTokenStatus = () => {
     const timeRemaining = getTokenExpirationTime(token);
 
     // Calcula a data de expiração
-    const expirationDate = timeRemaining > 0
-      ? new Date(Date.now() + (timeRemaining * 1000))
-      : null;
+    const expirationDate =
+      timeRemaining > 0 ? new Date(Date.now() + timeRemaining * 1000) : null;
 
     setTokenStatus({
       isValid: !expired,
@@ -82,36 +85,44 @@ export const useTokenStatus = () => {
  */
 export const useTokenWarning = (warningMinutes = 5) => {
   const [shouldShowWarning, setShouldShowWarning] = useState(false);
-  const [warningMessage, setWarningMessage] = useState('');
+  const [warningMessage, setWarningMessage] = useState("");
 
   useEffect(() => {
     const checkTokenWarning = () => {
-      const token = authService.getToken();
+      try {
+        const token = authService.getToken();
 
-      if (!token) {
+        if (!token) {
+          setShouldShowWarning(false);
+          setWarningMessage("");
+          return;
+        }
+
+        if (isTokenExpired(token)) {
+          setShouldShowWarning(true);
+          setWarningMessage(
+            "Sua sessão expirou. Você será redirecionado para o login.",
+          );
+          return;
+        }
+
+        if (isTokenExpiringSoon(token, warningMinutes)) {
+          const timeRemaining = getTokenExpirationTime(token);
+          const minutes = Math.floor(timeRemaining / 60);
+          const seconds = timeRemaining % 60;
+
+          setShouldShowWarning(true);
+          setWarningMessage(
+            `Sua sessão expirará em ${minutes}m ${seconds}s. Salve seu trabalho.`,
+          );
+        } else {
+          setShouldShowWarning(false);
+          setWarningMessage("");
+        }
+      } catch (error) {
+        console.error("Erro ao verificar token warning:", error);
         setShouldShowWarning(false);
-        setWarningMessage('');
-        return;
-      }
-
-      if (isTokenExpired(token)) {
-        setShouldShowWarning(true);
-        setWarningMessage('Sua sessão expirou. Você será redirecionado para o login.');
-        return;
-      }
-
-      if (isTokenExpiringSoon(token, warningMinutes)) {
-        const timeRemaining = getTokenExpirationTime(token);
-        const minutes = Math.floor(timeRemaining / 60);
-        const seconds = timeRemaining % 60;
-
-        setShouldShowWarning(true);
-        setWarningMessage(
-          `Sua sessão expirará em ${minutes}m ${seconds}s. Salve seu trabalho.`
-        );
-      } else {
-        setShouldShowWarning(false);
-        setWarningMessage('');
+        setWarningMessage("");
       }
     };
 
@@ -130,9 +141,10 @@ export const useTokenWarning = (warningMinutes = 5) => {
     };
   }, [warningMinutes]);
 
+  // Sempre retorna um objeto válido
   return {
-    shouldShowWarning,
-    warningMessage,
+    shouldShowWarning: shouldShowWarning || false,
+    warningMessage: warningMessage || "",
     dismissWarning: () => setShouldShowWarning(false),
   };
 };

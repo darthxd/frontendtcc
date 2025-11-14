@@ -10,6 +10,10 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [schoolUnits, setSchoolUnits] = useState([]);
+
+  console.log("Login: Renderizando");
+  console.log("Login: schoolUnits =", schoolUnits);
+  console.log("Login: É array?", Array.isArray(schoolUnits));
   const [loadingUnits, setLoadingUnits] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +33,22 @@ const Login = () => {
       try {
         setLoadingUnits(true);
         const units = await schoolUnitService.getAllSchoolUnits();
-        setSchoolUnits(units);
+        console.log("Login: Unidades recebidas da API:", units);
+        console.log(
+          "Login: Tipo:",
+          typeof units,
+          "É array?",
+          Array.isArray(units),
+        );
+
+        // Garantir que é um array
+        if (Array.isArray(units)) {
+          setSchoolUnits(units);
+        } else {
+          console.error("Login: API não retornou array de unidades:", units);
+          setSchoolUnits([]);
+          toast.error("Formato de dados inválido recebido do servidor");
+        }
       } catch (error) {
         console.error("Erro ao carregar unidades escolares:", error);
         toast.error("Erro ao carregar unidades escolares");
@@ -96,11 +115,12 @@ const Login = () => {
                       ? "Carregando unidades..."
                       : "Selecione uma unidade"}
                   </option>
-                  {schoolUnits.map((unit) => (
-                    <option key={unit.id} value={unit.id}>
-                      {unit.name}
-                    </option>
-                  ))}
+                  {Array.isArray(schoolUnits) &&
+                    schoolUnits.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
                 </select>
               </div>
               {errors.unitId && (

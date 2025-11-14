@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Search } from "lucide-react";
 import api from "../services/api";
 import { teacherService } from "../services/teacherService";
 import { schoolUnitService } from "../services/schoolUnitService";
+import { ensureArray } from "../hooks/useSafeArray";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
@@ -39,7 +40,8 @@ const Teachers = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = teachers.filter(
+    const safeTeachers = ensureArray(teachers, []);
+    const filtered = safeTeachers.filter(
       (teacher) =>
         teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,10 +55,12 @@ const Teachers = () => {
   const fetchTeachers = async () => {
     try {
       const response = await api.get("/teacher");
-      setTeachers(response.data);
+      const data = ensureArray(response.data, []);
+      setTeachers(data);
     } catch (error) {
+      console.error("Erro ao carregar professores:", error);
       toast.error("Erro ao carregar professores");
-      console.error("Erro:", error);
+      setTeachers([]);
     } finally {
       setLoading(false);
     }
@@ -429,7 +433,7 @@ const Teachers = () => {
                     defaultValue=""
                   >
                     <option value="">Selecione uma unidade</option>
-                    {schoolUnits.map((unit) => (
+                    {ensureArray(schoolUnits, []).map((unit) => (
                       <option key={unit.id} value={unit.id}>
                         {unit.name}
                       </option>
@@ -564,7 +568,7 @@ const Teachers = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTeachers.map((teacher) => (
+              {ensureArray(filteredTeachers, []).map((teacher) => (
                 <tr key={teacher.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {teacher.id}

@@ -2,8 +2,8 @@
  * Componentes UI reutilizáveis para elementos comuns
  */
 
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+import React from "react";
+import { Loader2 } from "lucide-react";
 
 // ==================== LOADING COMPONENTS ====================
 
@@ -15,15 +15,15 @@ import { Loader2 } from 'lucide-react';
  * @param {string} props.className - Classes CSS adicionais
  */
 export const Spinner = ({
-  size = 'md',
-  color = 'border-primary-600',
-  className = ''
+  size = "md",
+  color = "border-primary-600",
+  className = "",
 }) => {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-8 w-8',
-    lg: 'h-12 w-12',
-    xl: 'h-16 w-16'
+    sm: "h-4 w-4",
+    md: "h-8 w-8",
+    lg: "h-12 w-12",
+    xl: "h-16 w-16",
   };
 
   return (
@@ -41,16 +41,16 @@ export const Spinner = ({
  * @param {string} props.className - Classes CSS adicionais
  */
 export const Loading = ({
-  text = 'Carregando...',
-  size = 'md',
-  className = ''
+  text = "Carregando...",
+  size = "md",
+  className = "",
 }) => {
   return (
-    <div className={`flex flex-col justify-center items-center py-8 ${className}`}>
+    <div
+      className={`flex flex-col justify-center items-center py-8 ${className}`}
+    >
       <Spinner size={size} />
-      {text && (
-        <p className="mt-2 text-sm text-gray-500">{text}</p>
-      )}
+      {text && <p className="mt-2 text-sm text-gray-500">{text}</p>}
     </div>
   );
 };
@@ -60,7 +60,7 @@ export const Loading = ({
  * @param {Object} props - Propriedades do componente
  * @param {string} props.text - Texto de carregamento
  */
-export const PageLoading = ({ text = 'Carregando...' }) => {
+export const PageLoading = ({ text = "Carregando..." }) => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <Spinner size="lg" />
@@ -75,7 +75,7 @@ export const PageLoading = ({ text = 'Carregando...' }) => {
  * @param {string} props.text - Texto de carregamento
  * @param {string} props.className - Classes CSS adicionais
  */
-export const InlineLoading = ({ text, className = '' }) => {
+export const InlineLoading = ({ text, className = "" }) => {
   return (
     <div className={`flex items-center ${className}`}>
       <Spinner size="sm" />
@@ -93,9 +93,12 @@ export const InlineLoading = ({ text, className = '' }) => {
  * @param {string} props.className - Classes CSS adicionais
  * @param {Function} props.onClick - Função de clique
  */
-export const Card = ({ children, className = '', onClick }) => {
-  const baseClasses = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6';
-  const clickableClasses = onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : '';
+export const Card = ({ children, className = "", onClick = null }) => {
+  const baseClasses =
+    "bg-white rounded-lg shadow-sm border border-gray-200 p-6";
+  const clickableClasses = onClick
+    ? "cursor-pointer hover:shadow-lg transition-shadow"
+    : "";
 
   return (
     <div
@@ -121,10 +124,10 @@ export const StatCard = ({
   title,
   value,
   icon: Icon,
-  color = 'bg-blue-500',
+  color = "bg-blue-500",
   subtitle,
   onClick,
-  className = ''
+  className = "",
 }) => (
   <Card onClick={onClick} className={className}>
     <div className="flex items-center">
@@ -151,11 +154,11 @@ export const StatCard = ({
  * @param {React.ReactNode} props.action - Ação opcional (botão, etc.)
  */
 export const EmptyState = ({
-  icon: Icon,
-  title,
-  message,
-  action,
-  className = ''
+  icon: Icon = null,
+  title = "",
+  message = "",
+  action = null,
+  className = "",
 }) => (
   <div className={`text-center py-8 ${className}`}>
     {Icon && <Icon className="mx-auto h-12 w-12 text-gray-400" />}
@@ -179,21 +182,21 @@ export const StatusBadge = ({
   status,
   text,
   color,
-  size = 'md',
-  className = ''
+  size = "md",
+  className = "",
 }) => {
   const statusColors = {
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    error: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800',
-    neutral: 'bg-gray-100 text-gray-800'
+    success: "bg-green-100 text-green-800",
+    warning: "bg-yellow-100 text-yellow-800",
+    error: "bg-red-100 text-red-800",
+    info: "bg-blue-100 text-blue-800",
+    neutral: "bg-gray-100 text-gray-800",
   };
 
   const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-0.5 text-xs',
-    lg: 'px-3 py-1 text-sm'
+    sm: "px-2 py-0.5 text-xs",
+    md: "px-2.5 py-0.5 text-xs",
+    lg: "px-3 py-1 text-sm",
   };
 
   const finalColor = color || statusColors[status] || statusColors.neutral;
@@ -222,31 +225,34 @@ export const StatusBadge = ({
 export const Button = ({
   children,
   loading = false,
-  loadingText = 'Carregando...',
-  variant = 'primary',
-  size = 'md',
+  loadingText = "Carregando...",
+  variant = "primary",
+  size = "md",
   disabled = false,
-  className = '',
+  className = "",
   ...props
 }) => {
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'
+    primary:
+      "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500",
+    secondary:
+      "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
+    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+    success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2',
-    lg: 'px-6 py-3 text-lg'
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2",
+    lg: "px-6 py-3 text-lg",
   };
 
-  const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseClasses =
+    "inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2";
 
   return (
     <button
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled || loading ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled || loading ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
       disabled={disabled || loading}
       {...props}
     >
@@ -270,7 +276,7 @@ export const FormInput = ({
   label,
   error,
   required = false,
-  className = '',
+  className = "",
   ...props
 }) => {
   return (
@@ -283,13 +289,11 @@ export const FormInput = ({
       )}
       <input
         className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-          error ? 'border-red-300' : 'border-gray-300'
+          error ? "border-red-300" : "border-gray-300"
         }`}
         {...props}
       />
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
 };
@@ -311,15 +315,15 @@ export const Modal = ({
   title,
   children,
   footer,
-  size = 'md'
+  size = "md",
 }) => {
   if (!isOpen) return null;
 
   const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
+    sm: "max-w-md",
+    md: "max-w-lg",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
   };
 
   return (
@@ -329,19 +333,17 @@ export const Modal = ({
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
-        <div className={`relative bg-white rounded-lg shadow-xl w-full ${sizes[size]}`}>
+        <div
+          className={`relative bg-white rounded-lg shadow-xl w-full ${sizes[size]}`}
+        >
           {title && (
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">{title}</h3>
             </div>
           )}
-          <div className="px-6 py-4">
-            {children}
-          </div>
+          <div className="px-6 py-4">{children}</div>
           {footer && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              {footer}
-            </div>
+            <div className="px-6 py-4 border-t border-gray-200">{footer}</div>
           )}
         </div>
       </div>
@@ -358,7 +360,12 @@ export const Modal = ({
  * @param {React.ReactNode} props.children - Conteúdo da tabela
  * @param {boolean} props.loading - Se está carregando
  */
-export const Table = ({ headers, children, loading, className = '' }) => {
+export const Table = ({
+  headers = [],
+  children,
+  loading = false,
+  className = "",
+}) => {
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="min-w-full divide-y divide-gray-200">

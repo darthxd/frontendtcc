@@ -31,6 +31,10 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const { user: currentUser, logout, hasRole } = useAuth();
 
+  console.log("Layout: Renderizando");
+  console.log("Layout: currentUser =", currentUser);
+  console.log("Layout: hasRole =", typeof hasRole);
+
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Mensagens", href: "/messages", icon: Mail },
@@ -154,45 +158,60 @@ const Layout = ({ children }) => {
     navigate("/login");
   };
 
-  const filteredNavigation = navigation.filter(
-    (item) => !item.role || hasRole(item.role),
-  );
+  // Verificação de segurança: garantir que hasRole existe e é uma função
+  const safeHasRole = typeof hasRole === "function" ? hasRole : () => false;
+
+  const filteredNavigation = Array.isArray(navigation)
+    ? navigation.filter((item) => !item.role || safeHasRole(item.role))
+    : [];
+
+  console.log("Layout: filteredNavigation length =", filteredNavigation.length);
+  console.log("Layout: filteredNavigation =", filteredNavigation);
 
   useEffect(() => {
+    console.log("Layout: useEffect executando fetchUserData");
     fetchUserData();
   }, []);
 
   const fetchUserData = async () => {
+    console.log("Layout: fetchUserData iniciando");
+
+    if (!currentUser) {
+      console.log("Layout: currentUser não existe, pulando fetch");
+      setLoading(false);
+      return;
+    }
+
     try {
-      if (hasRole("ROLE_ADMIN")) {
+      if (safeHasRole("ROLE_ADMIN")) {
         const response = await api.get(
           `/admin/username/${currentUser.username}`,
         );
         const data = response.data;
         setDetailedUser(data);
       }
-      if (hasRole("ROLE_TEACHER")) {
+      if (safeHasRole("ROLE_TEACHER")) {
         const response = await api.get(
           `/teacher/username/${currentUser.username}`,
         );
         const data = response.data;
         setDetailedUser(data);
       }
-      if (hasRole("ROLE_STUDENT")) {
+      if (safeHasRole("ROLE_STUDENT")) {
         const response = await api.get(
           `/student/username/${currentUser.username}`,
         );
         const data = response.data;
         setDetailedUser(data);
       }
-      if (hasRole("ROLE_COORDINATOR")) {
+      if (safeHasRole("ROLE_COORDINATOR")) {
         const response = await api.get(
           `/coordinator/username/${currentUser.username}`,
         );
         const data = response.data;
         setDetailedUser(data);
       }
-      if (hasRole("ROLE_SECRETARY")) {
+      if (safeHasRole("ROLE_SECRETARY")) {
         const response = await api.get(
           `/secretary/username/${currentUser.username}`,
         );
@@ -206,7 +225,9 @@ const Layout = ({ children }) => {
     }
   };
 
-  if (loading) {
+  console.log("Layout: loading =", loading, "detailedUser =", detailedUser);
+
+  if (loading || !detailedUser) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -226,29 +247,30 @@ const Layout = ({ children }) => {
               </h1>
             </div>
             <nav className="mt-5 flex-1 px-2 space-y-1">
-              {filteredNavigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`${
-                      isActive
-                        ? "bg-primary-100 text-primary-900"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
-                  >
-                    <item.icon
+              {Array.isArray(filteredNavigation) &&
+                filteredNavigation.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
                       className={`${
                         isActive
-                          ? "text-primary-500"
-                          : "text-gray-400 group-hover:text-gray-500"
-                      } mr-3 flex-shrink-0 h-6 w-6`}
-                    />
-                    {item.name}
-                  </Link>
-                );
-              })}
+                          ? "bg-primary-100 text-primary-900"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                    >
+                      <item.icon
+                        className={`${
+                          isActive
+                            ? "text-primary-500"
+                            : "text-gray-400 group-hover:text-gray-500"
+                        } mr-3 flex-shrink-0 h-6 w-6`}
+                      />
+                      {item.name}
+                    </Link>
+                  );
+                })}
             </nav>
           </div>
           <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
@@ -258,7 +280,7 @@ const Layout = ({ children }) => {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {detailedUser.name}
+                  {detailedUser?.name || currentUser?.username || "Usuário"}
                 </p>
                 <p className="text-xs text-gray-500">
                   {currentUser?.role === "ROLE_ADMIN"
@@ -326,30 +348,31 @@ const Layout = ({ children }) => {
                   </h1>
                 </div>
                 <nav className="mt-5 px-2 space-y-1">
-                  {filteredNavigation.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`${
-                          isActive
-                            ? "bg-primary-100 text-primary-900"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        <item.icon
+                  {Array.isArray(filteredNavigation) &&
+                    filteredNavigation.map((item) => {
+                      const isActive = location.pathname === item.href;
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
                           className={`${
                             isActive
-                              ? "text-primary-500"
-                              : "text-gray-400 group-hover:text-gray-500"
-                          } mr-4 flex-shrink-0 h-6 w-6`}
-                        />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
+                              ? "bg-primary-100 text-primary-900"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <item.icon
+                            className={`${
+                              isActive
+                                ? "text-primary-500"
+                                : "text-gray-400 group-hover:text-gray-500"
+                            } mr-4 flex-shrink-0 h-6 w-6`}
+                          />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
                 </nav>
               </div>
               <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
@@ -359,7 +382,7 @@ const Layout = ({ children }) => {
                   </div>
                   <div className="ml-3">
                     <p className="text-base font-medium text-gray-700">
-                      {detailedUser.name}
+                      {detailedUser?.name || currentUser?.username || "Usuário"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {currentUser?.role === "ROLE_ADMIN"

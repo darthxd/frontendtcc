@@ -39,7 +39,28 @@ import Unauthorized from "./pages/Unauthorized";
 import TokenWarning from "./components/TokenWarning";
 
 function AppContent() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  console.log("=== AppContent: Iniciando ===");
+
+  let authContext;
+  try {
+    authContext = useAuth();
+    console.log("AppContent: useAuth retornou:", authContext);
+  } catch (error) {
+    console.error("AppContent: ERRO ao chamar useAuth:", error);
+    throw error;
+  }
+
+  if (!authContext) {
+    console.error("AppContent: useAuth retornou undefined/null!");
+    throw new Error("useAuth returned undefined or null");
+  }
+
+  const { isAuthenticated, isLoading, user } = authContext;
+  console.log("AppContent: Estado extraído:", {
+    isAuthenticated,
+    isLoading,
+    user,
+  });
 
   if (isLoading) {
     return (
@@ -347,11 +368,38 @@ function AppContent() {
 }
 
 function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  console.log("=== App: Renderizando ===");
+  console.log("App: AuthProvider existe?", AuthProvider ? "SIM" : "NÃO");
+  console.log("App: AppContent existe?", AppContent ? "SIM" : "NÃO");
+
+  try {
+    return (
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    );
+  } catch (error) {
+    console.error("App: ERRO ao renderizar:", error);
+    return (
+      <div
+        style={{
+          padding: "20px",
+          background: "#fee",
+          border: "2px solid #c00",
+          margin: "20px",
+          fontFamily: "monospace",
+        }}
+      >
+        <h2 style={{ color: "#c00" }}>Erro ao renderizar App</h2>
+        <p>
+          <strong>Mensagem:</strong> {error.message}
+        </p>
+        <pre style={{ background: "#fff", padding: "10px", overflow: "auto" }}>
+          {error.stack}
+        </pre>
+      </div>
+    );
+  }
 }
 
 export default App;

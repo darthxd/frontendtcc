@@ -3,7 +3,7 @@ import { BarChart3, TrendingUp, Calendar, Users } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
-const TeacherStats = ({ teacherData, teacherClasses }) => {
+const TeacherStats = ({ teacherData = null, teacherClasses = [] }) => {
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalClasses: 0,
@@ -15,7 +15,7 @@ const TeacherStats = ({ teacherData, teacherClasses }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("week"); // week, month, year
 
   useEffect(() => {
-    if (teacherClasses.length > 0) {
+    if (teacherClasses && teacherClasses.length > 0) {
       fetchStats();
     }
   }, [teacherClasses, selectedPeriod]);

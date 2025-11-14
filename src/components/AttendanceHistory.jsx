@@ -3,14 +3,14 @@ import { Calendar, Users, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
-const AttendanceHistory = ({ teacherData, selectedClass }) => {
+const AttendanceHistory = ({ teacherData = null, selectedClass = null }) => {
   const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [expandedDate, setExpandedDate] = useState(null);
 
   useEffect(() => {
-    if (selectedClass) {
+    if (selectedClass && selectedClass.id) {
       fetchAttendanceHistory();
     }
   }, [selectedClass, currentMonth]);

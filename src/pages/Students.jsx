@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Search, X, Eye, Fingerprint } from "lucide-react";
 import api from "../services/api";
 import { studentService } from "../services/studentService";
 import { schoolUnitService } from "../services/schoolUnitService";
+import { ensureArray } from "../hooks/useSafeArray";
 import toast from "react-hot-toast";
 
 const Students = () => {
@@ -44,7 +45,8 @@ const Students = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = students.filter(
+    const safeStudents = ensureArray(students, []);
+    const filtered = safeStudents.filter(
       (student) =>
         student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.email?.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -55,10 +57,12 @@ const Students = () => {
   const fetchStudents = async () => {
     try {
       const response = await api.get("/student");
-      setStudents(response.data);
+      const data = ensureArray(response.data, []);
+      setStudents(data);
     } catch (error) {
+      console.error("Erro ao buscar alunos:", error);
       toast.error("Erro ao carregar alunos");
-      console.error("Erro:", error);
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -515,8 +519,8 @@ const Students = () => {
                     disabled={loadingUnits}
                     defaultValue=""
                   >
-                    <option value="">Selecione uma unidade</option>
-                    {schoolUnits.map((unit) => (
+                    <option value="">Todas as unidades</option>
+                    {ensureArray(schoolUnits, []).map((unit) => (
                       <option key={unit.id} value={unit.id}>
                         {unit.name}
                       </option>
@@ -622,7 +626,7 @@ const Students = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student) => (
+              {ensureArray(filteredStudents, []).map((student) => (
                 <tr key={student.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {student.id}
